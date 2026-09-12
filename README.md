@@ -31,21 +31,19 @@ seven registries. **[Try the live demo](https://qalvinahmad.github.io/prohibited
 ```js
 import { validate, contains, censor } from 'prohibited-word';
 
-validate('kamu anjing');
+validate('piss off');
 // { isValid: false, maxSeverity: 2,
-//   found: [{ word: 'anjing', category: 'kasar', severity: 2, via: 'word', confidence: 0.7, index: 5 }] }
+//   found: [{ word: 'piss off', category: 'profanity', severity: 2, via: 'word', confidence: 0.7, index: 0 }] }
 
-contains('kamu 4nj1ng');                  // true  (leet-speak)
-contains('a.n.j.i.n.g');                  // true  (separator evasion)
-contains('halo apa kabar');               // false
-contains('banget');                       // false (no Scunthorpe false-positives)
-validate('kamu jancok', { locale: 'jv' });// Javanese regional support
+contains('you are sh1t');                   // true  (leet-speak)
+contains('f.u.c.k you');                    // true  (separator evasion)
+contains('hello how are you');              // false
+contains('Scunthorpe');                     // false (no Scunthorpe false-positives)
 validate('good 👍', { locale: 'en-AU' }); // flagged — clean for en-US (region-aware emoji)
-validate('anak yatim piatu', { locale: 'id-ID' }); // clean (regional override)
-validate('kamu anjing', { minSeverity: 3 });       // severity threshold
-validate('kamu anjing', { minConfidence: 0.8 });   // confidence threshold (0..1 per hit)
-validate('meeting room 13', { locale: 'en-US' }); // standalone symbols (4/9/13/17/666) by region
-censor('kamu anjing');                    // 'kamu ******'
+validate('you are a bastard', { minSeverity: 3 });    // clean (severity threshold)
+validate('shut up bitch', { minConfidence: 0.8 });    // clean (confidence threshold 0..1 per hit)
+validate('meeting room 13', { locale: 'en-US' }); // needsReview (standalone symbols 4/9/13/17/666 by region)
+censor('shut up bitch');                    // '**** up *****'
 ```
 
 ## Detector layers (donation & community apps)
@@ -53,11 +51,11 @@ censor('kamu anjing');                    // 'kamu ******'
 Default is profanity-only. Opt in per layer:
 
 ```js
-validate('hubungi 081234567890', { detectors: ['pii'] }); // phone/email/NIK/card/SSN/passport/bank
-validate('j o h n [at] gmail [dot] com', { detectors: ['pii'] }); // obfuscation-aware
-validate('transfer langsung ke rekening ini', { detectors: ['scam'] }); // +crypto wallets, payment links
-validate('aku mau bunuh diri', { detectors: ['sensitive'] }); // -> needsHelp (not just block)
-validate('main slot gacor', { detectors: ['sensitive'] });    // judol/gambling -> block
+validate('call +14155552671', { detectors: ['pii'] }); // phone/email/SSN/passport/bank/card
+validate('contact j o h n [at] gmail [dot] com', { detectors: ['pii'] }); // obfuscation-aware
+validate('transfer directly to this account', { detectors: ['scam'] }); // +crypto wallets, payment links
+validate('i want to kill myself', { detectors: ['sensitive'] }); // -> needsHelp (not just block)
+validate('claim your online casino bonus', { detectors: ['sensitive'] }); // gambling -> block
 // { isValid, needsReview, needsHelp, maxSeverity, found: [{detector, type, action, confidence, ...}] }
 ```
 
@@ -67,14 +65,14 @@ triggers a help response, never just a sensor). Filter granularity with
 `types: ['phone', 'self_harm']`. PII patterns use checksum validation where
 possible (Luhn for cards, province+date for Indonesian NIK).
 
-Scope for precision: `{ lang: ['id', 'en'] }` or `{ locale: 'id-ID' }`.
-Customize: `{ customWords: [...] }`, `{ whitelist: ['alay'] }` (built-in lists are aggressive by design).
+Scope for precision: `{ lang: ['en', 'es'] }` or `{ locale: 'en-US' }`.
+Customize: `{ customWords: [...] }`, `{ whitelist: [...] }` (built-in lists are aggressive by design).
 
 Flutter:
 
 ```dart
 String? validator(String? v) {
-  final r = validate(v, locale: 'id-ID');
+  final r = validate(v, locale: 'en-US');
   if (r.isValid) return null;
   return 'Inappropriate word: ${r.found.map((f) => f.word).join(', ')}';
 }
@@ -239,7 +237,7 @@ Single source of truth: `packages/core/words.json` (v4 schema) + `words-lite.jso
 (id+en-us). Every language implements the same contract in
 [`packages/core/NORMALIZER.md`](packages/core/NORMALIZER.md): trie matching with
 word boundaries (upstream `safe_text` semantics) plus separator-skipping, so
-evasion like `a.n.j.i.n.g` is caught without flagging innocent words like `banget`.
+evasion like `f.u.c.k` is caught without flagging innocent words like `Scunthorpe`.
 Every hit carries `confidence` (tier-based defaults, per-entry overrides);
 standalone number/symbol tokens (`4`, `13`, `666`) only match whole tokens in
 matching regions, never substrings.

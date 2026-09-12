@@ -82,25 +82,25 @@
       </div>
       <h1 class="hero-title">Form Profanity &amp; Content Filter</h1>
       <p class="hero-subtitle">
-        Validasi sensor kata untuk formulir &amp; komentar pengguna. Mendukung <b>130 bahasa &amp; dialek</b> dengan konteks budaya ganda (bahasa + regional), emoji/gestur tabu (seperti 👍), serta deteksi PII &amp; penipuan.
+        Word-filter validation for user forms &amp; comments. Supports <b>130 languages &amp; dialects</b> with dual cultural context (language + region), taboo emoji/gestures (like 👍), plus PII &amp; scam detection.
       </p>
 
       <div class="stats-row">
         <div class="stat-card">
           <span class="stat-val" id="stat-langs">130</span>
-          <span class="stat-lbl">Bahasa &amp; Dialek</span>
+          <span class="stat-lbl">Languages &amp; Dialects</span>
         </div>
         <div class="stat-card">
           <span class="stat-val" id="stat-words">–</span>
-          <span class="stat-lbl">Kata &amp; Frasa</span>
+          <span class="stat-lbl">Words &amp; Phrases</span>
         </div>
         <div class="stat-card">
           <span class="stat-val" id="stat-regions">–</span>
-          <span class="stat-lbl">Regional Tabu</span>
+          <span class="stat-lbl">Taboo Regions</span>
         </div>
         <div class="stat-card">
           <span class="stat-val" id="stat-emoji">–</span>
-          <span class="stat-lbl">Aturan Gestur / Emoji</span>
+          <span class="stat-lbl">Gesture / Emoji Rules</span>
         </div>
       </div>
     </section>
@@ -108,8 +108,8 @@
     <!-- Interactive Live Demo Card: Clean Single Form Field -->
     <section class="card demo-section" id="demo">
       <div class="section-head">
-        <h2 class="section-title">Uji Validasi Interaktif</h2>
-        <p class="section-desc">Ketik kalimat atau coba salah satu preset untuk menguji sensor otomatis secara instan langsung di browser.</p>
+        <h2 class="section-title">Interactive Validation Test</h2>
+        <p class="section-desc">Type a sentence or try a preset to test automatic filtering instantly in your browser.</p>
       </div>
 
       <!-- The Simplified Form Text Field -->
@@ -125,7 +125,7 @@
             type="text" 
             id="demo-input" 
             class="clean-input" 
-            placeholder="Ketik kata atau kalimat untuk divalidasi (contoh: 'kamu anjing', 'good 👍', '4nj1ng')..."
+            placeholder="Type a word or sentence to validate (e.g. 'shut up', 'good 👍', 'sh1t')..."
             autocomplete="off"
             spellcheck="false"
           >
@@ -140,25 +140,25 @@
         <!-- Controls Toolbar (Locale, Severity, Detectors) -->
         <div class="controls-toolbar">
           <div class="select-group">
-            <label for="demo-locale" class="control-label">Locale / Bahasa</label>
+            <label for="demo-locale" class="control-label">Locale / Language</label>
             <div class="select-box">
               <select id="demo-locale"></select>
             </div>
           </div>
 
           <div class="select-group">
-            <label for="demo-sev" class="control-label">Batas Severity</label>
+            <label for="demo-sev" class="control-label">Severity Limit</label>
             <div class="select-box">
               <select id="demo-sev">
-                <option value="1">1 — Semua Pelanggaran</option>
-                <option value="2" selected>2 — Kata Kasar / Ofensif+</option>
-                <option value="3">3 — Hanya Sangat Kasar (Slurs)</option>
+                <option value="1">1 — All violations</option>
+                <option value="2" selected>2 — Profanity / Offensive+</option>
+                <option value="3">3 — Severe slurs only</option>
               </select>
             </div>
           </div>
 
           <div class="detectors-group">
-            <span class="control-label">Detektor Aktif</span>
+            <span class="control-label">Active Detectors</span>
             <div class="chips-toggle">
               <label class="toggle-chip">
                 <input type="checkbox" id="det-profanity" checked>
@@ -174,7 +174,7 @@
               </label>
               <label class="toggle-chip">
                 <input type="checkbox" id="det-sensitive">
-                <span>Sensitif</span>
+                <span>Sensitive</span>
               </label>
             </div>
           </div>
@@ -182,7 +182,7 @@
 
         <!-- Quick Test Presets -->
         <div class="presets-container">
-          <span class="presets-label">Coba Preset:</span>
+          <span class="presets-label">Try a preset:</span>
           <div class="presets-list" id="presets"></div>
         </div>
       </div>
@@ -195,8 +195,8 @@
             <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M18 12h.01M8 16h8"/>
           </svg>
         </div>
-        <p class="empty-state-title">Siap untuk memvalidasi teks</p>
-        <p class="empty-state-desc">Ketik teks pada kolom di atas atau klik salah satu tombol preset untuk melihat hasil sensor &amp; analisis secara real-time.</p>
+        <p class="empty-state-title">Ready to validate text</p>
+        <p class="empty-state-desc">Type text in the field above or click a preset button to see filtering results &amp; analysis in real time.</p>
       </div>
 
       <!-- Result Container: ONLY displayed when user inputs text -->
@@ -219,13 +219,13 @@
         <!-- Censored / Masked Preview -->
         <div class="preview-box">
           <div class="preview-header">
-            <span class="preview-label">Hasil Sensor Otomatis (Censored Text):</span>
-            <button type="button" id="copy-clean-btn" class="mini-copy-btn" title="Salin teks yang telah disensor">
+            <span class="preview-label">Auto-Censored Text:</span>
+            <button type="button" id="copy-clean-btn" class="mini-copy-btn" title="Copy the censored text">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
               </svg>
-              <span>Salin Teks Bersih</span>
+              <span>Copy Clean Text</span>
             </button>
           </div>
           <div class="censored-output" id="censored-output">–</div>
@@ -234,7 +234,7 @@
         <!-- In-Context Highlighted Sentence -->
         <div class="preview-box" id="highlight-box" style="display: none;">
           <div class="preview-header">
-            <span class="preview-label">Penandaan Kata dalam Konteks (Highlighted):</span>
+            <span class="preview-label">Words in Context (Highlighted):</span>
           </div>
           <div class="highlighted-output" id="highlighted-output"></div>
         </div>
@@ -242,8 +242,8 @@
         <!-- Violations Breakdown -->
         <div class="violations-box" id="violations-box" style="display: none;">
           <div class="violations-header">
-            <span class="violations-title">Kata &amp; Simbol Terdeteksi:</span>
-            <span class="violations-count" id="violations-count">0 temuan</span>
+            <span class="violations-title">Detected Words &amp; Symbols:</span>
+            <span class="violations-count" id="violations-count">0 findings</span>
           </div>
           <div class="chips-grid" id="chips-grid"></div>
         </div>
@@ -253,8 +253,8 @@
     <!-- Source Code & SDK Integration Tabs -->
     <section class="card code-section" id="install">
       <div class="section-head">
-        <h2 class="section-title">Integrasi SDK &amp; Source Code</h2>
-        <p class="section-desc">Gunakan arsitektur yang sama di seluruh stack teknologi Anda. Pilih bahasa pemrograman di bawah untuk melihat instruksi instalasi dan contoh implementasi:</p>
+        <h2 class="section-title">SDK Integration &amp; Source Code</h2>
+        <p class="section-desc">Use the same architecture across your whole stack. Pick a language below for install instructions and implementation examples:</p>
       </div>
 
       <!-- Languages Tab Bar -->
@@ -274,7 +274,7 @@
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
-            <span id="copy-code-text">Salin Kode</span>
+            <span id="copy-code-text">Copy Code</span>
           </button>
         </div>
 
@@ -282,8 +282,8 @@
         <div class="install-bar">
           <span class="install-prefix">$</span>
           <code id="install-cmd">npm install prohibited-word</code>
-          <button type="button" class="mini-copy-btn" id="copy-install-btn" title="Salin perintah instalasi">
-            <span>Salin</span>
+          <button type="button" class="mini-copy-btn" id="copy-install-btn" title="Copy the install command">
+            <span>Copy</span>
           </button>
         </div>
 
@@ -291,7 +291,7 @@
         <pre class="terminal-code"><code id="code-block"></code></pre>
       </div>
 
-      <p class="note" id="maturity-note">Mendukung 130 bahasa dengan tingkatan keandalan (Tier 1 Verified, Tier 2 Regional/Jawa, Tier 3 Starter).</p>
+      <p class="note" id="maturity-note">Supporting 130 languages with reliability tiers (Tier 1 Verified, Tier 2 Regional, Tier 3 Starter).</p>
     </section>
   </div>
 
@@ -299,10 +299,10 @@
   <footer class="site-footer">
     <div class="wrap footer-content">
       <p>
-        Lisensi MIT · Dataset dasar oleh <a href="https://github.com/master-wayne7/safe_text" target="_blank" rel="noopener noreferrer">safe_text</a> (Ronit Rameja) — lihat <a href="https://github.com/qalvinahmad/prohibited-word/blob/main/NOTICE.md" target="_blank" rel="noopener noreferrer">NOTICE</a>.
+        MIT License · Base dataset by <a href="https://github.com/master-wayne7/safe_text" target="_blank" rel="noopener noreferrer">safe_text</a> (Ronit Rameja) — see <a href="https://github.com/qalvinahmad/prohibited-word/blob/main/NOTICE.md" target="_blank" rel="noopener noreferrer">NOTICE</a>.
       </p>
       <p class="footer-sub">
-        Dikembangkan oleh <a href="https://github.com/qalvinahmad" target="_blank" rel="noopener noreferrer">qalvinahmad</a> · <a href="https://github.com/qalvinahmad/prohibited-word" target="_blank" rel="noopener noreferrer">Kontribusi Bahasa &amp; PR Terbuka</a>
+        Developed by <a href="https://github.com/qalvinahmad" target="_blank" rel="noopener noreferrer">qalvinahmad</a> · <a href="https://github.com/qalvinahmad/prohibited-word" target="_blank" rel="noopener noreferrer">Language Contributions &amp; Open PRs</a>
       </p>
     </div>
   </footer>

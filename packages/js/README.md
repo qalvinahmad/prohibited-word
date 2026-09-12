@@ -1,6 +1,6 @@
 # prohibited-word (npm)
 
-Form profanity validation — 124 languages, offline-first, leet-aware.
+Form profanity validation — 130 languages & locales, offline-first, leet-aware.
 Part of the [prohibited-word monorepo](https://github.com/qalvinahmad/prohibited-word).
 
 ```bash
@@ -10,16 +10,20 @@ npm install prohibited-word
 ```js
 import { validate, contains, censor } from 'prohibited-word';
 
-validate('kamu anjing');
-// { isValid: false, maxSeverity: 2, found: [{ word: 'anjing', category: 'kasar', severity: 2, via: 'word', index: 5 }] }
+validate('piss off');
+// { isValid: false, maxSeverity: 2, found: [{ word: 'piss off', ... }] }
 
-contains('kamu 4nj1ng');                    // true (leet)
-contains('a.n.j.i.n.g');                    // true (separator evasion)
-contains('halo apa kabar');                 // false
-validate('kamu jancok', { locale: 'jv' });  // 124 languages via locale
-validate('good 👍', { locale: 'en-AU' });   // region-aware emoji (clean for en-US)
-validate('kamu anjing', { minSeverity: 3 });// severity threshold
-censor('kamu anjing');                      // 'kamu ******'
+contains('you are sh1t');                   // true (leet)
+contains('f.u.c.k you');                    // true (separator evasion)
+contains('hello how are you');              // false
+validate('good 👍', { locale: 'en-AU' }); // region-aware emoji
+validate('shut up bitch', { minSeverity: 3 }); // severity threshold
+censor('shut up bitch');                    // '**** up *****'
+
+// Opt-in layers for donation & community apps:
+validate('call +14155552671', { detectors: ['pii'] });
+validate('transfer directly to this account', { detectors: ['scam'] });
+validate('i want to kill myself', { detectors: ['sensitive'] }); // -> needsHelp
 ```
 
 See the [full README](https://github.com/qalvinahmad/prohibited-word#readme)

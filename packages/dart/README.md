@@ -1,6 +1,6 @@
 # prohibited_word (pub.dev)
 
-Form profanity validation for Dart & Flutter — 124 languages, offline-first.
+Form profanity validation for Dart & Flutter — 130 languages & locales, offline-first.
 Part of the [prohibited-word monorepo](https://github.com/qalvinahmad/prohibited-word).
 
 ```yaml
@@ -11,14 +11,14 @@ dependencies:
 ```dart
 import 'package:prohibited_word/prohibited_word.dart';
 
-validate('kamu anjing').isValid;              // false
-containsProhibited('kamu 4nj1ng');            // true (leet)
-containsProhibited('a.n.j.i.n.g');            // true (separator evasion)
-validate('kamu jancok', locale: 'jv');        // 124 languages via locale
+validate('piss off').isValid;                 // false
+containsProhibited('you are sh1t');           // true (leet)
+containsProhibited('f.u.c.k you');            // true (separator evasion)
 validate('good 👍', locale: 'en-AU');         // region-aware emoji
+validate('call +14155552671', detectors: ['pii']); // PII layer
 
 String? validator(String? v) {
-  final r = validate(v, locale: 'id-ID');
+  final r = validate(v, locale: 'en-US');
   if (r.isValid) return null;
   return 'Inappropriate word: ${r.found.map((f) => f.word).join(', ')}';
 }

@@ -8,27 +8,27 @@
       filename: 'validator.js',
       cmd: 'npm install prohibited-word',
       code: [
-        "// 1. Impor validator dari package npm",
+        "// 1. Import the validator from npm",
         "import { validate, contains, censor } from 'prohibited-word';",
         "",
-        "// 2. Validasi input formulir pengguna",
-        "const result = validate('kamu anjing banget', { locale: 'id-ID' });",
+        "// 2. Validate user form input",
+        "const result = validate('shut up bitch', { locale: 'en-US' });",
         "",
         "if (!result.isValid) {",
-        "  console.log('Status: Ditolak / Mengandung kata terlarang');",
-        "  console.log('Kata terdeteksi:', result.found.map(f => f.word));",
-        "  console.log('Tingkat keparahan (Max Severity):', result.maxSeverity);",
+        "  console.log('Status: Rejected / Contains prohibited words');",
+        "  console.log('Detected words:', result.found.map(f => f.word));",
+        "  console.log('Max Severity:', result.maxSeverity);",
         "} else {",
-        "  console.log('Status: Bersih & Lolos validasi');",
+        "  console.log('Status: Clean & passed validation');",
         "}",
         "",
-        "// 3. Sensor otomatis menjadi tanda bintang (*)",
-        "const cleanText = censor('kamu anjing banget', '*');",
-        "console.log('Hasil sensor:', cleanText); // 'kamu ****** banget'",
+        "// 3. Auto-mask with asterisks (*)",
+        "const cleanText = censor('shut up bitch', '*');",
+        "console.log('Censored:', cleanText); // '**** up *****'",
         "",
-        "// 4. Deteksi gesture/emoji budaya (contoh jempol 👍 di AU vs US)",
-        "console.log('👍 di AU:', validate('good 👍', { locale: 'en-AU' }).isValid); // false (tabu)",
-        "console.log('👍 di US:', validate('good 👍', { locale: 'en-US' }).isValid); // true (ramah)"
+        "// 4. Cultural gesture/emoji detection (thumbs-up 👍 in AU vs US)",
+        "console.log('👍 in AU:', validate('good 👍', { locale: 'en-AU' }).isValid); // false (rude)",
+        "console.log('👍 in US:', validate('good 👍', { locale: 'en-US' }).isValid); // true (friendly)"
       ].join('\n')
     },
     python: {
@@ -36,26 +36,26 @@
       filename: 'validator.py',
       cmd: 'pip install prohibited-word',
       code: [
-        "# 1. Impor validator dari paket Python",
-        "from prohibited_word import validate, contains, censor",
+        "# 1. Import the validator from PyPI",
+        "from prohibited_word import validate, contains",
         "",
-        "# 2. Validasi input komentar",
-        "result = validate('kamu anjing banget', locale='id-ID')",
+        "# 2. Validate a comment input",
+        "result = validate('shut up bitch', locale='en-US')",
         "",
         "if not result['is_valid']:",
         "    blocked = [f['word'] for f in result['found']]",
-        "    print(f'Peringatan: Komentar mengandung kata terlarang: {blocked}')",
-        "    print(f'Max Severity: {result[\"max_severity\"]}')",
+        "    print(f'Warning: comment contains prohibited words: {blocked}')",
+        "    print(f\"Max Severity: {result['max_severity']}\")",
         "else:",
-        "    print('Komentar aman dan lolos validasi')",
+        "    print('Comment is safe and passed validation')",
         "",
-        "# 3. Sensor teks otomatis",
-        "safe_text = censor('kamu anjing banget', mask='*')",
-        "print('Teks tersensor:', safe_text)  # 'kamu ****** banget'",
+        "# 3. Opt-in PII layer (phone numbers, emails, IDs, cards)",
+        "pii = validate('call +14155552671', detectors=['pii'])",
+        "print('PII found:', [f['type'] for f in pii['found']])  # ['phone']",
         "",
-        "# 4. Cek cepat boolean (O(N) Trie)",
-        "if contains('kamu 4nj1ng', locale='id-ID'):",
-        "    print('Terdeteksi pola leet-speak!')"
+        "# 4. Fast boolean check (O(N) trie)",
+        "if contains('you are sh1t', locale='en-US'):",
+        "    print('Leet-speak pattern detected!')"
       ].join('\n')
     },
     go: {
@@ -71,23 +71,19 @@
         ")",
         "",
         "func main() {",
-        "\t// Validasi teks komentar dengan opsi Locale",
-        "\tres := pw.Validate(\"kamu anjing banget\", pw.Options{",
-        "\t\tLocale: \"id-ID\",",
+        "\t// Validate comment text with a Locale option",
+        "\tres := pw.Validate(\"shut up bitch\", pw.Options{",
+        "\t\tLocale: \"en-US\",",
         "\t})",
         "",
         "\tif !res.IsValid {",
-        "\t\tfmt.Printf(\"Validasi Gagal! Max Severity: %d\\n\", res.MaxSeverity)",
+        "\t\tfmt.Printf(\"Validation failed! Max Severity: %d\\n\", res.MaxSeverity)",
         "\t\tfor _, f := range res.Found {",
-        "\t\t\tfmt.Printf(\"- Kata: %s | Kategori: %s | Severity: %d\\n\", f.Word, f.Category, f.Severity)",
+        "\t\t\tfmt.Printf(\"- Word: %s | Category: %s | Severity: %d\\n\", f.Word, f.Category, f.Severity)",
         "\t\t}",
         "\t} else {",
-        "\t\tfmt.Println(\"Teks lolos validasi\")",
+        "\t\tfmt.Println(\"Text passed validation\")",
         "\t}",
-        "",
-        "\t// Sensor kata terlarang",
-        "\tsafe := pw.Censor(\"kamu anjing banget\", \"*\")",
-        "\tfmt.Println(\"Hasil Sensor:\", safe)",
         "}"
       ].join('\n')
     },
@@ -99,22 +95,22 @@
         "import 'package:flutter/material.dart';",
         "import 'package:prohibited_word/prohibited_word.dart';",
         "",
-        "/// Validator bawaan untuk TextFormField Flutter",
+        "/// Built-in validator for Flutter TextFormField",
         "String? formFieldValidator(String? value) {",
         "  if (value == null || value.trim().isEmpty) return null;",
         "",
-        "  final result = validate(value, locale: 'id-ID');",
+        "  final result = validate(value, locale: 'en-US');",
         "  if (!result.isValid) {",
         "    final words = result.found.map((f) => f.word).join(', ');",
-        "    return 'Komentar tidak pantas: terdeteksi [$words]';",
+        "    return 'Inappropriate comment: detected [$words]';",
         "  }",
         "",
-        "  return null; // Teks lolos validasi",
+        "  return null; // Text passed validation",
         "}",
         "",
-        "// Contoh implementasi di dalam Widget:",
+        "// Example usage inside a Widget:",
         "// TextFormField(",
-        "//   decoration: InputDecoration(labelText: 'Tulis komentar...'),",
+        "//   decoration: InputDecoration(labelText: 'Write a comment...'),",
         "//   validator: formFieldValidator,",
         "//   autovalidateMode: AutovalidateMode.onUserInteraction,",
         "// )"
@@ -128,21 +124,17 @@
         "import Foundation",
         "import ProhibitedWord",
         "",
-        "// Validasi input pengguna",
-        "let input = \"kamu anjing banget\"",
-        "let result = validate(input, locale: \"id-ID\")",
+        "// Validate user input",
+        "let input = \"shut up bitch\"",
+        "let result = validate(input, locale: \"en-US\")",
         "",
         "if !result.isValid {",
         "    let violations = result.found.map { $0.word }.joined(separator: \", \")",
-        "    print(\"Validasi form gagal! Ditemukan: [\\(violations)]\")",
+        "    print(\"Form validation failed! Found: [\\(violations)]\")",
         "    print(\"Max severity: \\(result.maxSeverity)\")",
         "} else {",
-        "    print(\"Teks valid dan siap disimpan ke server\")",
+        "    print(\"Text is valid and ready to save to the server\")",
         "}",
-        "",
-        "// Sensor kata terlarang",
-        "let censored = censor(input, mask: \"*\")",
-        "print(\"Teks tersensor: \\(censored)\")"
       ].join('\n')
     },
     cli: {
@@ -150,48 +142,50 @@
       filename: 'Terminal',
       cmd: 'brew install qalvinahmad/tap/prohibited-word',
       code: [
-        "# 1. Periksa teks langsung melalui argumen:",
-        "prohibited-word --locale id-ID \"kamu anjing\"",
+        "# 1. Check text directly via arguments:",
+        "prohibited-word --locale en-US \"shut up bitch\"",
         "",
-        "# 2. Periksa teks via pipe / stdin (misal untuk Git commit-hook):",
-        "echo \"halo selamat pagi\" | prohibited-word --exit-code",
+        "# 2. Check text via pipe / stdin (e.g. for a Git commit-hook):",
+        "echo \"hello good morning\" | prohibited-word",
         "",
-        "# 3. Periksa dengan format JSON untuk integrasi CI/CD:",
-        "prohibited-word --json --locale ar-SA \"teks yang ingin diuji\""
+        "# 3. Enable detector layers (PII, scam, sensitive):",
+        "prohibited-word --detectors pii --locale en-US \"call +14155552671\""
       ].join('\n')
     }
   };
 
   var PRESETS = [
-    { label: 'Basic ID', text: 'kamu anjing banget', locale: 'id-ID', dets: ['profanity'] },
-    { label: 'Leet evasion', text: 'kamu 4nj1ng', locale: 'id-ID', dets: ['profanity'] },
-    { label: 'Separator evasion', text: 'a.n.j.i.n.g', locale: 'id-ID', dets: ['profanity'] },
-    { label: 'Thumbs-up AU 👍 (Tabu)', text: 'good job 👍', locale: 'en-AU', dets: ['profanity'] },
-    { label: 'Thumbs-up US 👍 (Ramah)', text: 'good job 👍', locale: 'en-US', dets: ['profanity'] },
-    { label: 'Jawa (jv)', text: 'kamu jancok', locale: 'jv', dets: ['profanity'] },
-    { label: 'Nomor HP (PII)', text: 'hubungi 081234567890 ya', locale: 'id-ID', dets: ['pii'] },
-    { label: 'Penipuan Transfer', text: 'transfer langsung ke rekening ini ya', locale: 'id-ID', dets: ['scam'] },
-    { label: 'Teks Bersih ✓', text: 'halo apa kabar, selamat pagi kawan', locale: 'id-ID', dets: ['profanity'] }
+    { label: 'Basic EN', text: 'shut up bitch', locale: 'en-US', dets: ['profanity'] },
+    { label: 'Leet evasion', text: 'you are sh1t', locale: 'en-US', dets: ['profanity'] },
+    { label: 'Separator evasion', text: 'f.u.c.k you', locale: 'en-US', dets: ['profanity'] },
+    { label: 'Clean', text: 'hello how are you, good morning', locale: 'en-US', dets: ['profanity'] },
+    { label: 'Scunthorpe', text: 'Scunthorpe', locale: 'en-US', dets: ['profanity'] },
+    { label: 'Thumbs-up AU (rude)', text: 'good job 👍', locale: 'en-AU', dets: ['profanity'] },
+    { label: 'Thumbs-up US (friendly)', text: 'good job 👍', locale: 'en-US', dets: ['profanity'] },
+    { label: 'Spanish (es)', text: 'eres un idiota', locale: 'es', dets: ['profanity'] },
+    { label: 'Phone number (PII)', text: 'call +14155552671 now', locale: 'en-US', dets: ['pii'] },
+    { label: 'Transfer scam', text: 'transfer directly to this account', locale: 'en-US', dets: ['scam'] },
+    { label: 'Self-harm', text: 'i want to kill myself', locale: 'en-US', dets: ['sensitive'] },
+    { label: 'Gambling spam', text: 'claim your online casino bonus', locale: 'en-US', dets: ['sensitive'] }
   ];
 
   var LOCALES = [
-    { code: '', label: 'Auto (Semua 130 Bahasa)' },
-    { code: 'id-ID', label: 'id-ID (Indonesia)' },
-    { code: 'en-US', label: 'en-US (Inggris - US)' },
-    { code: 'en-AU', label: 'en-AU (Inggris - Australia)' },
-    { code: 'en-GB', label: 'en-GB (Inggris - UK)' },
-    { code: 'jv', label: 'jv (Bahasa Jawa)' },
-    { code: 'ar-SA', label: 'ar-SA (Arab - Saudi Arabia)' },
-    { code: 'ms-MY', label: 'ms-MY (Melayu - Malaysia)' },
-    { code: 'nl-NL', label: 'nl-NL (Belanda)' },
-    { code: 'pt-BR', label: 'pt-BR (Portugis - Brasil)' },
-    { code: 'es-MX', label: 'es-MX (Spanyol - Meksiko)' },
-    { code: 'fr-FR', label: 'fr-FR (Prancis)' },
-    { code: 'zh-CN', label: 'zh-CN (Mandarin - China)' },
-    { code: 'ja-JP', label: 'ja-JP (Jepang)' },
-    { code: 'ko-KR', label: 'ko-KR (Korea)' },
-    { code: 'de-DE', label: 'de-DE (Jerman)' },
-    { code: 'ru-RU', label: 'ru-RU (Rusia)' }
+    { code: '', label: 'Auto (All 130 languages)' },
+    { code: 'en-US', label: 'en-US (English - US)' },
+    { code: 'en-AU', label: 'en-AU (English - Australia)' },
+    { code: 'en-GB', label: 'en-GB (English - UK)' },
+    { code: 'es', label: 'es (Spanish)' },
+    { code: 'ar-SA', label: 'ar-SA (Arabic - Saudi Arabia)' },
+    { code: 'ms-MY', label: 'ms-MY (Malay - Malaysia)' },
+    { code: 'nl-NL', label: 'nl-NL (Dutch)' },
+    { code: 'pt-BR', label: 'pt-BR (Portuguese - Brazil)' },
+    { code: 'es-MX', label: 'es-MX (Spanish - Mexico)' },
+    { code: 'fr-FR', label: 'fr-FR (French)' },
+    { code: 'zh-CN', label: 'zh-CN (Chinese - China)' },
+    { code: 'ja-JP', label: 'ja-JP (Japanese)' },
+    { code: 'ko-KR', label: 'ko-KR (Korean)' },
+    { code: 'de-DE', label: 'de-DE (German)' },
+    { code: 'ru-RU', label: 'ru-RU (Russian)' }
   ];
 
   function el(id) { return document.getElementById(id); }
@@ -199,7 +193,7 @@
   function copyText(text, btn, successLabel) {
     var oldText = btn.innerHTML;
     function done() {
-      btn.innerHTML = successLabel || '✓ Tersalin!';
+      btn.innerHTML = successLabel || '✓ Copied!';
       btn.classList.add('copied');
       setTimeout(function () {
         btn.innerHTML = oldText;
@@ -253,7 +247,7 @@
     tabTitle.textContent = SAMPLES.js.filename;
 
     el('copy-code-btn').addEventListener('click', function () {
-      copyText(code.textContent, el('copy-code-btn'), '<span>✓ Tersalin!</span>');
+      copyText(code.textContent, el('copy-code-btn'), '<span>✓ Copied!</span>');
     });
 
     el('copy-install-btn').addEventListener('click', function () {
@@ -335,7 +329,7 @@
     // Copy clean censored text button
     el('copy-clean-btn').addEventListener('click', function () {
       var txt = el('censored-output').textContent;
-      copyText(txt, el('copy-clean-btn'), '<span>✓ Teks Tersalin!</span>');
+      copyText(txt, el('copy-clean-btn'), '<span>✓ Text copied!</span>');
     });
   }
 
@@ -373,23 +367,23 @@
     if (!r.isValid) {
       banner.classList.add('status-flagged');
       iconEl.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
-      headingEl.textContent = 'Terdeteksi Pelanggaran (Flagged)';
-      subtextEl.textContent = 'Teks mengandung kata, gesture, atau konten terlarang yang diblokir.';
+      headingEl.textContent = 'Violation detected (Flagged)';
+      subtextEl.textContent = 'The text contains blocked prohibited words, gestures, or content.';
     } else if (r.needsReview) {
       banner.classList.add('status-review');
       iconEl.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
-      headingEl.textContent = 'Perlu Peninjauan (Needs Review)';
-      subtextEl.textContent = 'Teks mengandung kata/simbol yang berpotensi sensitif atau tabu.';
+      headingEl.textContent = 'Needs Review';
+      subtextEl.textContent = 'The text contains potentially sensitive or taboo words/symbols.';
     } else if (r.needsHelp) {
       banner.classList.add('status-help');
       iconEl.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
-      headingEl.textContent = 'Memerlukan Bantuan (Needs Help)';
-      subtextEl.textContent = 'Teks terdeteksi mengandung indikasi sensitif.';
+      headingEl.textContent = 'Needs Help';
+      subtextEl.textContent = 'The text shows sensitive indications — consider a supportive response.';
     } else {
       banner.classList.add('status-clean');
       iconEl.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
-      headingEl.textContent = 'Lolos Validasi (Clean)';
-      subtextEl.textContent = 'Teks bersih. Tidak ada kata, gesture tabu, atau PII terdeteksi.';
+      headingEl.textContent = 'Passed Validation (Clean)';
+      subtextEl.textContent = 'Clean text. No prohibited words, taboo gestures, or PII detected.';
     }
 
     // Censored text output
@@ -404,7 +398,7 @@
     if (r.found && r.found.length > 0) {
       highlightBox.style.display = 'block';
       violationsBox.style.display = 'block';
-      el('violations-count').textContent = r.found.length + ' temuan';
+      el('violations-count').textContent = r.found.length + ' findings';
 
       // Build highlighted HTML
       var highlightedHTML = escapeHtml(rawText);
@@ -420,13 +414,13 @@
       r.found.forEach(function (f) {
         var note = '';
         if (f.via === 'emoji') {
-          note = 'Gestur/Emoji tabu di region terpilih';
+          note = 'Taboo gesture/emoji in the selected region';
         } else if (f.detector === 'pii') {
-          note = 'Data pribadi (PII): ' + f.type;
+          note = 'Personal data (PII): ' + f.type;
         } else if (f.detector === 'scam') {
-          note = 'Pola penipuan / scam: ' + f.type;
+          note = 'Scam pattern: ' + f.type;
         } else {
-          note = 'Kata terlarang (' + (f.category || 'profanity') + ')';
+          note = 'Prohibited word (' + (f.category || 'profanity') + ')';
         }
 
         chipsHTML += '<div class="chip-item">'
@@ -466,11 +460,11 @@
     var verified = langs.filter(function (l) { return db.langs[l].maturity === 'verified' || db.langs[l].maturity === 'tier1'; }).length;
 
     el('stat-langs').textContent = langs.length;
-    el('stat-words').textContent = total.toLocaleString('id-ID');
+    el('stat-words').textContent = total.toLocaleString('en-US');
     el('stat-regions').textContent = Object.keys(db.regions || {}).length;
     el('stat-emoji').textContent = Object.keys(db.emoji || {}).length;
 
-    el('maturity-note').textContent = 'Mendukung ' + langs.length + ' bahasa: ' + verified + ' Tier 1 Verified, ' + regional + ' Tier 2 Regional (termasuk Bahasa Jawa jv), dan ' + starter + ' Tier 3 Starter.';
+    el('maturity-note').textContent = 'Supporting ' + langs.length + ' languages: ' + verified + ' Tier 1 Verified, ' + regional + ' Tier 2 Regional, and ' + starter + ' Tier 3 Starter.';
   }
 
   function initThemeToggle() {
@@ -500,7 +494,7 @@
       fillStats(db);
     }).catch(function (err) {
       console.error('Gagal memuat dataset:', err);
-      el('empty-state').innerHTML = '<div class="empty-state-title" style="color: #ef4444;">Dataset gagal dimuat: ' + escapeHtml(err.message) + '</div>';
+      el('empty-state').innerHTML = '<div class="empty-state-title" style="color: #ef4444;">Failed to load dataset: ' + escapeHtml(err.message) + '</div>';
     });
   });
 })();
