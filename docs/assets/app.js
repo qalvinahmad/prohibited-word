@@ -481,6 +481,85 @@
     });
   }
 
+  var WORDS_DB = null;
+  var WORDS_PAGE = 0;
+  var WORDS_PER_PAGE = 100;
+  var MATURITY_CONF = { curated: 0.7, regional: 0.6, starter: 0.4, verified: 0.95 };
+
+  function wordConf(lang, e) {
+    if (e.conf) return e.conf;
+    return MATURITY_CONF[(WORDS_DB.langs[lang] || {}).maturity] || 0.5;
+  }
+
+  function wordEntries(code) {
+    var spec = (WORDS_DB.langs || {})[code] || {};
+    var out = (spec.words || []).map(function (e) {
+      return { w: e.w, c: e.c || 'profanity', s: e.s || 2, conf: wordConf(code, e), own: true };
+    });
+    if (el('word-parent').checked && spec.parent && WORDS_DB.langs[spec.parent]) {
+      var seen = {};
+      out.forEach(function (e) { seen[String(e.w).toLowerCase()] = true; });
+      (WORDS_DB.langs[spec.parent].words || []).forEach(function (e) {
+        if (!seen[String(e.w).toLowerCase()]) {
+          out.push({ w: e.w, c: e.c || 'profanity', s: e.s || 2, conf: wordConf(spec.parent, e), own: false });
+        }
+      });
+    }
+    var q = el('word-search').value.trim().toLowerCase();
+    if (q) out = out.filter(function (e) { return String(e.w).toLowerCase().indexOf(q) >= 0; });
+    return out;
+  }
+
+  function renderWords() {
+    var code = el('word-lang').value;
+    var spec = (WORDS_DB.langs || {})[code] || {};
+    var all = wordEntries(code);
+    var pages = Math.max(1, Math.ceil(all.length / WORDS_PER_PAGE));
+    if (WORDS_PAGE >= pages) WORDS_PAGE = pages - 1;
+    var rows = all.slice(WORDS_PAGE * WORDS_PER_PAGE, WORDS_PAGE * WORDS_PER_PAGE + WORDS_PER_PAGE);
+    var html = '';
+    rows.forEach(function (e, i) {
+      html += '<tr><td>' + (WORDS_PAGE * WORDS_PER_PAGE + i + 1) + '</td><td><b>'
+        + escapeHtml(e.w) + '</b>' + (e.own ? '' : ' <span class="note">(base)</span>') + '</td><td>'
+        + escapeHtml(e.c) + '</td><td>' + e.s + '</td><td>' + e.conf + '</td></tr>';
+    });
+    el('word-rows').innerHTML = html || '<tr><td colspan="5" class="note">No words match.</td></tr>';
+    el('word-page').textContent = 'Page ' + (WORDS_PAGE + 1) + ' of ' + pages + ' · ' + all.length + ' words';
+    var parentTxt = spec.parent ? ' · parent: ' + spec.parent : '';
+    el('word-meta').textContent = (spec.name || code) + ' (' + code + ') · ' + (spec.maturity || '?')
+      + ' · source: ' + (spec.source || '?') + parentTxt;
+    try {
+      history.replaceState(null, '', '#words-' + code);
+    } catch (err) {}
+  }
+
+  function initWords(db) {
+    WORDS_DB = db;
+    var sel = el('word-lang');
+    Object.keys(db.langs || {}).sort(function (a, b) {
+      return ((db.langs[a] || {}).order || 999) - ((db.langs[b] || {}).order || 999);
+    }).forEach(function (code) {
+      var spec = db.langs[code] || {};
+      var o = document.createElement('option');
+      o.value = code;
+      o.textContent = (spec.name || code) + ' (' + code + ') — ' + (spec.words || []).length + ' words';
+      sel.appendChild(o);
+    });
+    var m = (location.hash || '').match(/^#words-([a-z0-9\-]+)/i) || (location.search || '').match(/[?&]lang=([a-z0-9\-]+)/i);
+    if (m && db.langs && db.langs[m[1].toLowerCase()]) sel.value = m[1].toLowerCase();
+    if (!sel.value) sel.value = 'jv';
+    ['word-lang', 'word-search', 'word-parent'].forEach(function (id) {
+      el(id).addEventListener('input', function () { WORDS_PAGE = 0; renderWords(); });
+      el(id).addEventListener('change', function () { WORDS_PAGE = 0; renderWords(); });
+    });
+    el('word-prev').addEventListener('click', function () { if (WORDS_PAGE > 0) { WORDS_PAGE--; renderWords(); } });
+    el('word-next').addEventListener('click', function () { WORDS_PAGE++; renderWords(); });
+    el('copy-word-link').addEventListener('click', function () {
+      copyText(location.origin + location.pathname + '#words-' + sel.value, el('copy-word-link'), 'Copied!');
+    });
+    renderWords();
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     initThemeToggle();
     initTabs();
@@ -492,8 +571,9 @@
     }).then(function (db) {
       window.ProhibitedWord.loadDataset(db);
       fillStats(db);
+      initWords(db);
     }).catch(function (err) {
-      console.error('Gagal memuat dataset:', err);
+      console.error('Failed to load dataset:', err);
       el('empty-state').innerHTML = '<div class="empty-state-title" style="color: #ef4444;">Failed to load dataset: ' + escapeHtml(err.message) + '</div>';
     });
   });

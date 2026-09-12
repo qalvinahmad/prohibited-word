@@ -53,6 +53,15 @@
           </svg>
         </a>
 
+        <a href="#words" class="icon-btn" title="Word List Browser" aria-label="Word List Browser">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            <line x1="9" y1="7" x2="15" y2="7"/>
+            <line x1="9" y1="11" x2="13" y2="11"/>
+          </svg>
+        </a>
+
         <button id="theme-toggle" class="icon-btn" type="button" title="Toggle Theme (Dark / Light)" aria-label="Toggle Theme">
           <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"/>
@@ -247,6 +256,36 @@
           </div>
           <div class="chips-grid" id="chips-grid"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- Word List Browser -->
+    <section class="card words-section" id="words">
+      <div class="section-head">
+        <h2 class="section-title">Word List Browser</h2>
+        <p class="section-desc">Inspect exactly which words each language contains. Pick a language, search, and share a direct link.</p>
+      </div>
+      <div class="demo-controls">
+        <label>Language
+          <select id="word-lang"></select>
+        </label>
+        <label>Search
+          <input type="search" id="word-search" placeholder="filter words…">
+        </label>
+        <label class="check"><input type="checkbox" id="word-parent"> include parent base</label>
+        <button type="button" class="mini-copy-btn" id="copy-word-link" title="Copy a direct link to this view">Copy link</button>
+      </div>
+      <p class="note" id="word-meta"></p>
+      <div class="table-wrap">
+        <table class="word-table">
+          <thead><tr><th>#</th><th>Word</th><th>Category</th><th>Severity</th><th>Confidence</th></tr></thead>
+          <tbody id="word-rows"></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <button type="button" class="mini-copy-btn" id="word-prev">← Prev</button>
+        <span class="note" id="word-page"></span>
+        <button type="button" class="mini-copy-btn" id="word-next">Next →</button>
       </div>
     </section>
 

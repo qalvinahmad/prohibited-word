@@ -93,138 +93,138 @@ To avoid overclaiming and ensure reliability, dataset coverage is categorized in
 <details>
 <summary><b>Click to expand full list of 130 supported languages & locales</b></summary>
 
-| # | Language / Locale | Code | Coverage Tier | Words |
-|---|---|---|---|---|
-| 1 | Afrikaans | `af` | Tier 1 (Curated) | 256 |
-| 2 | Albanian | `sq` | Tier 1 (Curated) | 179 |
-| 3 | Amharic | `am` | Tier 1 (Curated) | 50 |
-| 4 | Arabic | `ar` | Tier 1 (Curated) | 1.271 |
-| 5 | Armenian | `hy` | Tier 1 (Curated) | 267 |
-| 6 | Assamese | `as` | Tier 3 (Starter) | 6 |
-| 7 | Azerbaijani | `az` | Tier 1 (Curated) | 37 |
-| 8 | Basque | `eu` | Tier 1 (Curated) | 48 |
-| 9 | Belarusian | `be` | Tier 1 (Curated) | 118 |
-| 10 | Bengali | `bn` | Tier 1 (Curated) | 11 |
-| 11 | Bosnian | `bs` | Tier 3 (Starter) | 7 |
-| 12 | Breton | `br` | Tier 3 (Starter) | 5 |
-| 13 | Bulgarian | `bg` | Tier 1 (Curated) | 336 |
-| 14 | Burmese | `my` | Tier 1 (Curated) | 81 |
-| 15 | Catalan | `ca` | Tier 1 (Curated) | 136 |
-| 16 | Cebuano | `ceb` | Tier 1 (Curated) | 18 |
-| 17 | Corsican | `co` | Tier 3 (Starter) | 5 |
-| 18 | Croatian | `hr` | Tier 1 (Curated) | 242 |
-| 19 | Czech | `cs` | Tier 1 (Curated) | 224 |
-| 20 | Danish | `da` | Tier 1 (Curated) | 185 |
-| 21 | Dutch | `nl` | Tier 1 (Curated) | 1.224 |
-| 22 | Dutch (Belgium) | `nl-be` | Tier 2 (Regional) | 1.229 (5 + 1.224 base) |
-| 23 | English (UK) | `en-gb` | Tier 2 (Regional) | 12.674 (9 + 12.665 base) |
-| 24 | English (US) | `en-us` | Tier 1 (Curated) | 12.665 |
-| 25 | English (Australia) | `en-au` | Tier 2 (Regional) | 12.671 (6 + 12.665 base) |
-| 26 | English (Canada) | `en-ca` | Tier 2 (Regional) | 12.669 (4 + 12.665 base) |
-| 27 | English (India) | `en-in` | Tier 2 (Regional) | 12.671 (6 + 12.665 base) |
-| 28 | English (Singapore) | `en-sg` | Tier 2 (Regional) | 12.672 (7 + 12.665 base) |
-| 29 | English (New Zealand) | `en-nz` | Tier 2 (Regional) | 12.669 (4 + 12.665 base) |
-| 30 | English (Ireland) | `en-ie` | Tier 2 (Regional) | 12.671 (6 + 12.665 base) |
-| 31 | English (South Africa) | `en-za` | Tier 2 (Regional) | 12.672 (7 + 12.665 base) |
-| 32 | Esperanto | `eo` | Tier 1 (Curated) | 50 |
-| 33 | Estonian | `et` | Tier 1 (Curated) | 174 |
-| 34 | Faroese | `fo` | Tier 3 (Starter) | 5 |
-| 35 | Filipino | `fil` | Tier 1 (Curated) | 165 |
-| 36 | Finnish | `fi` | Tier 1 (Curated) | 317 |
-| 37 | French (Canada) | `fr-ca` | Tier 2 (Regional) | 3.716 (8 + 3.708 base) |
-| 38 | French (France) | `fr-fr` | Tier 1 (Curated) | 3.708 |
-| 39 | Frisian | `fy` | Tier 3 (Starter) | 5 |
-| 40 | Fula | `ff` | Tier 3 (Starter) | 5 |
-| 41 | Galician | `gl` | Tier 1 (Curated) | 74 |
-| 42 | Georgian | `ka` | Tier 3 (Starter) | 4 |
-| 43 | German | `de` | Tier 1 (Curated) | 621 |
-| 44 | Greek | `el` | Tier 1 (Curated) | 247 |
-| 45 | Guarani | `gn` | Tier 3 (Starter) | 4 |
-| 46 | Gujarati | `gu` | Tier 1 (Curated) | 11 |
-| 47 | Haitian Creole | `ht` | Tier 3 (Starter) | 6 |
-| 48 | Hausa | `ha` | Tier 3 (Starter) | 5 |
-| 49 | Hebrew | `he` | Tier 3 (Starter) | 6 |
-| 50 | Hindi | `hi` | Tier 1 (Curated) | 755 |
-| 51 | Hungarian | `hu` | Tier 1 (Curated) | 296 |
-| 52 | Icelandic | `is` | Tier 1 (Curated) | 137 |
-| 53 | Indonesian | `id` | Tier 1 (Curated) | 582 |
-| 54 | Irish | `ga` | Tier 3 (Starter) | 5 |
-| 55 | Italian | `it` | Tier 1 (Curated) | 1.749 |
-| 56 | Japanese | `ja` | Tier 1 (Curated) | 420 |
-| 57 | Japanese (Kansai) | `ja-kansai` | Tier 2 (Regional) | 425 (5 + 420 base) |
-| 58 | Javanese | `jv` | Tier 3 (Starter) | 21 |
-| 59 | Kannada | `kn` | Tier 1 (Curated) | 132 |
-| 60 | Kazakh | `kk` | Tier 3 (Starter) | 5 |
-| 61 | Khmer | `km` | Tier 1 (Curated) | 15 |
-| 62 | Kinyarwanda | `rw` | Tier 3 (Starter) | 4 |
-| 63 | Korean | `ko` | Tier 1 (Curated) | 3.071 |
-| 64 | Kurdish (Kurmanji) | `ku` | Tier 3 (Starter) | 5 |
-| 65 | Kurdish (Sorani) | `ckb` | Tier 3 (Starter) | 5 |
-| 66 | Kyrgyz | `ky` | Tier 3 (Starter) | 4 |
-| 67 | Lao | `lo` | Tier 3 (Starter) | 5 |
-| 68 | Latvian | `lv` | Tier 1 (Curated) | 198 |
-| 69 | Lithuanian | `lt` | Tier 1 (Curated) | 158 |
-| 70 | Macedonian | `mk` | Tier 1 (Curated) | 192 |
-| 71 | Malagasy | `mg` | Tier 3 (Starter) | 4 |
-| 72 | Malay | `ms` | Tier 1 (Curated) | 201 |
-| 73 | Malayalam | `ml` | Tier 1 (Curated) | 388 |
-| 74 | Maltese | `mt` | Tier 1 (Curated) | 132 |
-| 75 | Marathi | `mr` | Tier 1 (Curated) | 238 |
-| 76 | Mongolian | `mn` | Tier 1 (Curated) | 101 |
-| 77 | Nepali | `ne` | Tier 3 (Starter) | 6 |
-| 78 | Norwegian (Bokmål) | `no` | Tier 1 (Curated) | 171 |
-| 79 | Norwegian (Nynorsk) | `nn` | Tier 3 (Starter) | 178 (7 + 171 base) |
-| 80 | Odia | `or` | Tier 3 (Starter) | 5 |
-| 81 | Pashto | `ps` | Tier 3 (Starter) | 5 |
-| 82 | Persian | `fa` | Tier 1 (Curated) | 619 |
-| 83 | Polish | `pl` | Tier 1 (Curated) | 8.971 |
-| 84 | Portuguese (Brazil) | `pt-br` | Tier 2 (Regional) | 583 (8 + 575 base) |
-| 85 | Portuguese (Portugal) | `pt-pt` | Tier 1 (Curated) | 575 |
-| 86 | Punjabi | `pa` | Tier 1 (Curated) | 16 |
-| 87 | Romanian | `ro` | Tier 1 (Curated) | 290 |
-| 88 | Russian | `ru` | Tier 1 (Curated) | 4.948 |
-| 89 | Sardinian | `sc` | Tier 3 (Starter) | 5 |
-| 90 | Serbian | `sr` | Tier 1 (Curated) | 459 |
-| 91 | Shona | `sn` | Tier 3 (Starter) | 5 |
-| 92 | Silesian | `szl` | Tier 3 (Starter) | 5 |
-| 93 | Simplified Chinese (China) | `zh-cn` | Tier 1 (Curated) | 1.554 |
-| 94 | Sinhala | `si` | Tier 3 (Starter) | 5 |
-| 95 | Slovak | `sk` | Tier 1 (Curated) | 586 |
-| 96 | Slovenian | `sl` | Tier 1 (Curated) | 167 |
-| 97 | Somali | `so` | Tier 3 (Starter) | 5 |
-| 98 | Spanish | `es` | Tier 1 (Curated) | 1.651 |
-| 99 | Spanish (Spain) | `es-es` | Tier 2 (Regional) | 1.658 (7 + 1.651 base) |
-| 100 | Spanish (Latin America) | `es-419` | Tier 2 (Regional) | 1.658 (7 + 1.651 base) |
-| 101 | Spanish (Mexico) | `es-mx` | Tier 2 (Regional) | 1.660 (9 + 1.651 base) |
-| 102 | Swahili | `sw` | Tier 1 (Curated) | 21 |
-| 103 | Swedish | `sv` | Tier 1 (Curated) | 245 |
-| 104 | Syriac | `syr` | Tier 3 (Starter) | 4 |
-| 105 | Tajik | `tg` | Tier 3 (Starter) | 5 |
-| 106 | Tamazight | `zgh` | Tier 3 (Starter) | 4 |
-| 107 | Tamil | `ta` | Tier 1 (Curated) | 119 |
-| 108 | Tatar | `tt` | Tier 3 (Starter) | 5 |
-| 109 | Telugu | `te` | Tier 1 (Curated) | 317 |
-| 110 | Tetun | `tet` | Tier 1 (Curated) | 11 |
-| 111 | Thai | `th` | Tier 1 (Curated) | 1.715 |
-| 112 | Traditional Chinese (Hong Kong) | `zh-hk` | Tier 2 (Regional) | 1.563 (9 + 1.554 base) |
-| 113 | Traditional Chinese (Taiwan) | `zh-tw` | Tier 2 (Regional) | 1.563 (9 + 1.554 base) |
-| 114 | Turkish | `tr` | Tier 1 (Curated) | 370 |
-| 115 | Ukrainian | `uk` | Tier 1 (Curated) | 205 |
-| 116 | Urdu | `ur` | Tier 1 (Curated) | 19 |
-| 117 | Uzbek | `uz` | Tier 1 (Curated) | 102 |
-| 118 | Vietnamese | `vi` | Tier 1 (Curated) | 790 |
-| 119 | Welsh | `cy` | Tier 1 (Curated) | 169 |
-| 120 | Zaza | `zza` | Tier 3 (Starter) | 5 |
-| 121 | Ainu | `ain` | Tier 3 (Starter) | 4 |
-| 122 | Akan | `ak` | Tier 3 (Starter) | 5 |
-| 123 | Aragonese | `an` | Tier 3 (Starter) | 5 |
-| 124 | Aymara | `ay` | Tier 3 (Starter) | 3 |
-| 125 | Balochi | `bal` | Tier 3 (Starter) | 5 |
-| 126 | Bambara | `bm` | Tier 3 (Starter) | 5 |
-| 127 | Bhojpuri | `bho` | Tier 3 (Starter) | 6 |
-| 128 | Dzongkha | `dz` | Tier 1 (Curated) | 86 |
-| 129 | Igbo | `ig` | Tier 3 (Starter) | 5 |
-| 130 | Yoruba | `yo` | Tier 3 (Starter) | 6 |
+| # | Language / Locale | Code | Coverage Tier | Words | Detail |
+|---|---|---|---|---|---|
+| 1 | Afrikaans | `af` | Tier 1 (Curated) | 256 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-af) |
+| 2 | Albanian | `sq` | Tier 1 (Curated) | 179 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-sq) |
+| 3 | Amharic | `am` | Tier 1 (Curated) | 50 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-am) |
+| 4 | Arabic | `ar` | Tier 1 (Curated) | 1.271 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ar) |
+| 5 | Armenian | `hy` | Tier 1 (Curated) | 267 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-hy) |
+| 6 | Assamese | `as` | Tier 3 (Starter) | 6 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-as) |
+| 7 | Azerbaijani | `az` | Tier 1 (Curated) | 37 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-az) |
+| 8 | Basque | `eu` | Tier 1 (Curated) | 48 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-eu) |
+| 9 | Belarusian | `be` | Tier 1 (Curated) | 118 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-be) |
+| 10 | Bengali | `bn` | Tier 1 (Curated) | 11 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-bn) |
+| 11 | Bosnian | `bs` | Tier 3 (Starter) | 7 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-bs) |
+| 12 | Breton | `br` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-br) |
+| 13 | Bulgarian | `bg` | Tier 1 (Curated) | 336 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-bg) |
+| 14 | Burmese | `my` | Tier 1 (Curated) | 81 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-my) |
+| 15 | Catalan | `ca` | Tier 1 (Curated) | 136 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ca) |
+| 16 | Cebuano | `ceb` | Tier 1 (Curated) | 18 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ceb) |
+| 17 | Corsican | `co` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-co) |
+| 18 | Croatian | `hr` | Tier 1 (Curated) | 242 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-hr) |
+| 19 | Czech | `cs` | Tier 1 (Curated) | 224 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-cs) |
+| 20 | Danish | `da` | Tier 1 (Curated) | 185 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-da) |
+| 21 | Dutch | `nl` | Tier 1 (Curated) | 1.224 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-nl) |
+| 22 | Dutch (Belgium) | `nl-be` | Tier 2 (Regional) | 1.229 (5 + 1.224 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-nl-be) |
+| 23 | English (UK) | `en-gb` | Tier 2 (Regional) | 12.674 (9 + 12.665 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-en-gb) |
+| 24 | English (US) | `en-us` | Tier 1 (Curated) | 12.665 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-en-us) |
+| 25 | English (Australia) | `en-au` | Tier 2 (Regional) | 12.671 (6 + 12.665 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-en-au) |
+| 26 | English (Canada) | `en-ca` | Tier 2 (Regional) | 12.669 (4 + 12.665 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-en-ca) |
+| 27 | English (India) | `en-in` | Tier 2 (Regional) | 12.671 (6 + 12.665 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-en-in) |
+| 28 | English (Singapore) | `en-sg` | Tier 2 (Regional) | 12.672 (7 + 12.665 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-en-sg) |
+| 29 | English (New Zealand) | `en-nz` | Tier 2 (Regional) | 12.669 (4 + 12.665 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-en-nz) |
+| 30 | English (Ireland) | `en-ie` | Tier 2 (Regional) | 12.671 (6 + 12.665 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-en-ie) |
+| 31 | English (South Africa) | `en-za` | Tier 2 (Regional) | 12.672 (7 + 12.665 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-en-za) |
+| 32 | Esperanto | `eo` | Tier 1 (Curated) | 50 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-eo) |
+| 33 | Estonian | `et` | Tier 1 (Curated) | 174 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-et) |
+| 34 | Faroese | `fo` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-fo) |
+| 35 | Filipino | `fil` | Tier 1 (Curated) | 165 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-fil) |
+| 36 | Finnish | `fi` | Tier 1 (Curated) | 317 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-fi) |
+| 37 | French (Canada) | `fr-ca` | Tier 2 (Regional) | 3.716 (8 + 3.708 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-fr-ca) |
+| 38 | French (France) | `fr-fr` | Tier 1 (Curated) | 3.708 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-fr-fr) |
+| 39 | Frisian | `fy` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-fy) |
+| 40 | Fula | `ff` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ff) |
+| 41 | Galician | `gl` | Tier 1 (Curated) | 74 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-gl) |
+| 42 | Georgian | `ka` | Tier 3 (Starter) | 4 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ka) |
+| 43 | German | `de` | Tier 1 (Curated) | 621 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-de) |
+| 44 | Greek | `el` | Tier 1 (Curated) | 247 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-el) |
+| 45 | Guarani | `gn` | Tier 3 (Starter) | 4 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-gn) |
+| 46 | Gujarati | `gu` | Tier 1 (Curated) | 11 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-gu) |
+| 47 | Haitian Creole | `ht` | Tier 3 (Starter) | 6 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ht) |
+| 48 | Hausa | `ha` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ha) |
+| 49 | Hebrew | `he` | Tier 3 (Starter) | 6 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-he) |
+| 50 | Hindi | `hi` | Tier 1 (Curated) | 755 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-hi) |
+| 51 | Hungarian | `hu` | Tier 1 (Curated) | 296 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-hu) |
+| 52 | Icelandic | `is` | Tier 1 (Curated) | 137 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-is) |
+| 53 | Indonesian | `id` | Tier 1 (Curated) | 582 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-id) |
+| 54 | Irish | `ga` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ga) |
+| 55 | Italian | `it` | Tier 1 (Curated) | 1.749 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-it) |
+| 56 | Japanese | `ja` | Tier 1 (Curated) | 420 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ja) |
+| 57 | Japanese (Kansai) | `ja-kansai` | Tier 2 (Regional) | 425 (5 + 420 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ja-kansai) |
+| 58 | Javanese | `jv` | Tier 3 (Starter) | 21 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-jv) |
+| 59 | Kannada | `kn` | Tier 1 (Curated) | 132 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-kn) |
+| 60 | Kazakh | `kk` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-kk) |
+| 61 | Khmer | `km` | Tier 1 (Curated) | 15 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-km) |
+| 62 | Kinyarwanda | `rw` | Tier 3 (Starter) | 4 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-rw) |
+| 63 | Korean | `ko` | Tier 1 (Curated) | 3.071 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ko) |
+| 64 | Kurdish (Kurmanji) | `ku` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ku) |
+| 65 | Kurdish (Sorani) | `ckb` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ckb) |
+| 66 | Kyrgyz | `ky` | Tier 3 (Starter) | 4 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ky) |
+| 67 | Lao | `lo` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-lo) |
+| 68 | Latvian | `lv` | Tier 1 (Curated) | 198 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-lv) |
+| 69 | Lithuanian | `lt` | Tier 1 (Curated) | 158 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-lt) |
+| 70 | Macedonian | `mk` | Tier 1 (Curated) | 192 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-mk) |
+| 71 | Malagasy | `mg` | Tier 3 (Starter) | 4 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-mg) |
+| 72 | Malay | `ms` | Tier 1 (Curated) | 201 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ms) |
+| 73 | Malayalam | `ml` | Tier 1 (Curated) | 388 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ml) |
+| 74 | Maltese | `mt` | Tier 1 (Curated) | 132 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-mt) |
+| 75 | Marathi | `mr` | Tier 1 (Curated) | 238 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-mr) |
+| 76 | Mongolian | `mn` | Tier 1 (Curated) | 101 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-mn) |
+| 77 | Nepali | `ne` | Tier 3 (Starter) | 6 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ne) |
+| 78 | Norwegian (Bokmål) | `no` | Tier 1 (Curated) | 171 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-no) |
+| 79 | Norwegian (Nynorsk) | `nn` | Tier 3 (Starter) | 178 (7 + 171 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-nn) |
+| 80 | Odia | `or` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-or) |
+| 81 | Pashto | `ps` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ps) |
+| 82 | Persian | `fa` | Tier 1 (Curated) | 619 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-fa) |
+| 83 | Polish | `pl` | Tier 1 (Curated) | 8.971 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-pl) |
+| 84 | Portuguese (Brazil) | `pt-br` | Tier 2 (Regional) | 583 (8 + 575 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-pt-br) |
+| 85 | Portuguese (Portugal) | `pt-pt` | Tier 1 (Curated) | 575 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-pt-pt) |
+| 86 | Punjabi | `pa` | Tier 1 (Curated) | 16 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-pa) |
+| 87 | Romanian | `ro` | Tier 1 (Curated) | 290 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ro) |
+| 88 | Russian | `ru` | Tier 1 (Curated) | 4.948 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ru) |
+| 89 | Sardinian | `sc` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-sc) |
+| 90 | Serbian | `sr` | Tier 1 (Curated) | 459 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-sr) |
+| 91 | Shona | `sn` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-sn) |
+| 92 | Silesian | `szl` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-szl) |
+| 93 | Simplified Chinese (China) | `zh-cn` | Tier 1 (Curated) | 1.554 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-zh-cn) |
+| 94 | Sinhala | `si` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-si) |
+| 95 | Slovak | `sk` | Tier 1 (Curated) | 586 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-sk) |
+| 96 | Slovenian | `sl` | Tier 1 (Curated) | 167 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-sl) |
+| 97 | Somali | `so` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-so) |
+| 98 | Spanish | `es` | Tier 1 (Curated) | 1.651 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-es) |
+| 99 | Spanish (Spain) | `es-es` | Tier 2 (Regional) | 1.658 (7 + 1.651 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-es-es) |
+| 100 | Spanish (Latin America) | `es-419` | Tier 2 (Regional) | 1.658 (7 + 1.651 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-es-419) |
+| 101 | Spanish (Mexico) | `es-mx` | Tier 2 (Regional) | 1.660 (9 + 1.651 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-es-mx) |
+| 102 | Swahili | `sw` | Tier 1 (Curated) | 21 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-sw) |
+| 103 | Swedish | `sv` | Tier 1 (Curated) | 245 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-sv) |
+| 104 | Syriac | `syr` | Tier 3 (Starter) | 4 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-syr) |
+| 105 | Tajik | `tg` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-tg) |
+| 106 | Tamazight | `zgh` | Tier 3 (Starter) | 4 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-zgh) |
+| 107 | Tamil | `ta` | Tier 1 (Curated) | 119 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ta) |
+| 108 | Tatar | `tt` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-tt) |
+| 109 | Telugu | `te` | Tier 1 (Curated) | 317 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-te) |
+| 110 | Tetun | `tet` | Tier 1 (Curated) | 11 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-tet) |
+| 111 | Thai | `th` | Tier 1 (Curated) | 1.715 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-th) |
+| 112 | Traditional Chinese (Hong Kong) | `zh-hk` | Tier 2 (Regional) | 1.563 (9 + 1.554 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-zh-hk) |
+| 113 | Traditional Chinese (Taiwan) | `zh-tw` | Tier 2 (Regional) | 1.563 (9 + 1.554 base) | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-zh-tw) |
+| 114 | Turkish | `tr` | Tier 1 (Curated) | 370 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-tr) |
+| 115 | Ukrainian | `uk` | Tier 1 (Curated) | 205 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-uk) |
+| 116 | Urdu | `ur` | Tier 1 (Curated) | 19 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ur) |
+| 117 | Uzbek | `uz` | Tier 1 (Curated) | 102 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-uz) |
+| 118 | Vietnamese | `vi` | Tier 1 (Curated) | 790 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-vi) |
+| 119 | Welsh | `cy` | Tier 1 (Curated) | 169 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-cy) |
+| 120 | Zaza | `zza` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-zza) |
+| 121 | Ainu | `ain` | Tier 3 (Starter) | 4 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ain) |
+| 122 | Akan | `ak` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ak) |
+| 123 | Aragonese | `an` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-an) |
+| 124 | Aymara | `ay` | Tier 3 (Starter) | 3 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ay) |
+| 125 | Balochi | `bal` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-bal) |
+| 126 | Bambara | `bm` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-bm) |
+| 127 | Bhojpuri | `bho` | Tier 3 (Starter) | 6 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-bho) |
+| 128 | Dzongkha | `dz` | Tier 1 (Curated) | 86 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-dz) |
+| 129 | Igbo | `ig` | Tier 3 (Starter) | 5 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-ig) |
+| 130 | Yoruba | `yo` | Tier 3 (Starter) | 6 | [Detail](https://qalvinahmad.github.io/prohibited-word/#words-yo) |
 </details>
 
 > Words = effective entries per locale. Regional rows show `own (+ base inherited)`,
