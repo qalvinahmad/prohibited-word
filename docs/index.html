@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>prohibited-word — form profanity validation for 124 languages</title>
+  <meta name="description" content="Offline-first profanity filter for forms: 124 languages, locale + region + emoji + severity. npm, pub.dev, PyPI, Go, SPM, CocoaPods, Homebrew.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f46e5'/%3E%3Cpath d='M9 16.5l5 5 9-11' stroke='white' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<nav class="top"><div class="wrap">
+  <a class="brand" href="#">prohibited-word</a>
+  <div class="links">
+    <a href="#demo">Live demo</a>
+    <a href="#install">Install</a>
+    <a href="https://github.com/qalvinahmad/prohibited-word">GitHub</a>
+  </div>
+</div></nav>
+
+<div class="wrap">
+  <header class="hero">
+    <h1>prohibited-word</h1>
+    <p>Form profanity validation for <b>124 languages</b> — with locale, region,
+    emoji and severity layers. Offline-first. One monorepo, seven registries.</p>
+    <div class="badges">
+      <a href="https://www.npmjs.com/package/prohibited-word"><img alt="npm" src="https://img.shields.io/npm/v/prohibited-word?logo=npm"></a>
+      <a href="https://pub.dev/packages/prohibited_word"><img alt="pub" src="https://img.shields.io/pub/v/prohibited_word?logo=dart"></a>
+      <a href="https://pub.dev/packages/prohibited_word/score"><img alt="pub points" src="https://img.shields.io/pub/points/prohibited_word"></a>
+      <a href="https://pypi.org/project/prohibited-word/"><img alt="pypi" src="https://img.shields.io/pypi/v/prohibited-word?logo=pypi"></a>
+      <a href="https://github.com/qalvinahmad/prohibited-word/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+      <a href="https://github.com/qalvinahmad/prohibited-word/blob/main/docs/CONTRIBUTING-langs.md"><img alt="prs" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></a>
+    </div>
+  </header>
+
+  <section class="stats">
+    <div class="stat"><b id="stat-langs">124</b><span>languages</span></div>
+    <div class="stat"><b id="stat-words">–</b><span>words &amp; phrases</span></div>
+    <div class="stat"><b id="stat-regions">–</b><span>regions</span></div>
+    <div class="stat"><b id="stat-emoji">–</b><span>emoji rules</span></div>
+  </section>
+
+  <section class="card" id="demo">
+    <h2>Live demo</h2>
+    <p class="desc">Runs entirely in your browser using the real dataset (words.json v3). Try leet-speak, separator evasion, locales and emoji.</p>
+    <div class="presets" id="presets"></div>
+    <textarea id="demo-input" placeholder="Type something to validate…"></textarea>
+    <div class="demo-controls">
+      <label>Locale
+        <select id="demo-locale"></select>
+      </label>
+      <label>Min severity
+        <select id="demo-sev">
+          <option value="1">1 — everything</option>
+          <option value="2" selected>2 — offensive+</option>
+          <option value="3">3 — severe slurs only</option>
+        </select>
+      </label>
+    </div>
+    <div id="demo-result"><div class="status clean">Loading dataset…</div></div>
+  </section>
+
+  <section class="card" id="install">
+    <h2>Install</h2>
+    <p class="desc">Same API everywhere: <code>validate(text, { locale })</code> returns <code>{ isValid, maxSeverity, found[] }</code>.</p>
+    <div class="tabs" id="tabs"></div>
+    <div class="code-head"><button id="copy-btn">Copy</button></div>
+    <pre id="code-block"></pre>
+    <p class="note" id="maturity-note"></p>
+  </section>
+</div>
+
+<footer>
+  MIT licensed · wordlist base by <a href="https://github.com/master-wayne7/safe_text">safe_text</a> (Ronit Rameja) —
+  see <a href="https://github.com/qalvinahmad/prohibited-word/blob/main/NOTICE.md">NOTICE</a> ·
+  <a href="https://github.com/qalvinahmad/prohibited-word">contribute a language</a>
+</footer>
+
+<script src="assets/engine.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

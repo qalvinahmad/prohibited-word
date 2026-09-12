@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "prohibited-word"
+version = "0.1.0"
+description = "Form profanity validation — 124 languages, offline-first"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["profanity", "validation", "content-moderation"]
+
+[project.urls]
+Homepage = "https://github.com/qalvinahmad/prohibited-word"
+Repository = "https://github.com/qalvinahmad/prohibited-word"
+Issues = "https://github.com/qalvinahmad/prohibited-word/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/prohibited_word"]
+artifacts = ["src/prohibited_word/words.json"]

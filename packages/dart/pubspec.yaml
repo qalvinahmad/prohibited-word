@@ -1,0 +1,10 @@
+name: prohibited_word
+description: Form profanity validation — 124 languages, offline-first, leet-aware.
+version: 0.1.0
+repository: https://github.com/qalvinahmad/prohibited-word
+issue_tracker: https://github.com/qalvinahmad/prohibited-word/issues
+environment:
+  sdk: ^3.0.0
+topics:
+  - text-processing
+  - validation
