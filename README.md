@@ -95,140 +95,143 @@ To avoid overclaiming and ensure reliability, dataset coverage is categorized in
 <details>
 <summary><b>Click to expand full list of 130 supported languages & locales</b></summary>
 
-| # | Language / Locale | Code | Coverage Tier |
-|---|---|---|---|
-| 1 | Afrikaans | `af` | Tier 1 (Curated) |
-| 2 | Albanian | `sq` | Tier 1 (Curated) |
-| 3 | Amharic | `am` | Tier 1 (Curated) |
-| 4 | Arabic | `ar` | Tier 1 (Curated) |
-| 5 | Armenian | `hy` | Tier 1 (Curated) |
-| 6 | Assamese | `as` | Tier 3 (Starter) |
-| 7 | Azerbaijani | `az` | Tier 1 (Curated) |
-| 8 | Basque | `eu` | Tier 1 (Curated) |
-| 9 | Belarusian | `be` | Tier 1 (Curated) |
-| 10 | Bengali | `bn` | Tier 1 (Curated) |
-| 11 | Bosnian | `bs` | Tier 3 (Starter) |
-| 12 | Breton | `br` | Tier 3 (Starter) |
-| 13 | Bulgarian | `bg` | Tier 1 (Curated) |
-| 14 | Burmese | `my` | Tier 1 (Curated) |
-| 15 | Catalan | `ca` | Tier 1 (Curated) |
-| 16 | Cebuano | `ceb` | Tier 1 (Curated) |
-| 17 | Corsican | `co` | Tier 3 (Starter) |
-| 18 | Croatian | `hr` | Tier 1 (Curated) |
-| 19 | Czech | `cs` | Tier 1 (Curated) |
-| 20 | Danish | `da` | Tier 1 (Curated) |
-| 21 | Dutch | `nl` | Tier 1 (Curated) |
-| 22 | Dutch (Belgium) | `nl-be` | Tier 2 (Regional) |
-| 23 | English (UK) | `en-gb` | Tier 2 (Regional) |
-| 24 | English (US) | `en-us` | Tier 1 (Curated) |
-| 25 | English (Australia) | `en-au` | Tier 2 (Regional) |
-| 26 | English (Canada) | `en-ca` | Tier 2 (Regional) |
-| 27 | English (India) | `en-in` | Tier 2 (Regional) |
-| 28 | English (Singapore) | `en-sg` | Tier 2 (Regional) |
-| 29 | English (New Zealand) | `en-nz` | Tier 2 (Regional) |
-| 30 | English (Ireland) | `en-ie` | Tier 2 (Regional) |
-| 31 | English (South Africa) | `en-za` | Tier 2 (Regional) |
-| 32 | Esperanto | `eo` | Tier 1 (Curated) |
-| 33 | Estonian | `et` | Tier 1 (Curated) |
-| 34 | Faroese | `fo` | Tier 3 (Starter) |
-| 35 | Filipino | `fil` | Tier 1 (Curated) |
-| 36 | Finnish | `fi` | Tier 1 (Curated) |
-| 37 | French (Canada) | `fr-ca` | Tier 2 (Regional) |
-| 38 | French (France) | `fr-fr` | Tier 1 (Curated) |
-| 39 | Frisian | `fy` | Tier 3 (Starter) |
-| 40 | Fula | `ff` | Tier 3 (Starter) |
-| 41 | Galician | `gl` | Tier 1 (Curated) |
-| 42 | Georgian | `ka` | Tier 3 (Starter) |
-| 43 | German | `de` | Tier 1 (Curated) |
-| 44 | Greek | `el` | Tier 1 (Curated) |
-| 45 | Guarani | `gn` | Tier 3 (Starter) |
-| 46 | Gujarati | `gu` | Tier 1 (Curated) |
-| 47 | Haitian Creole | `ht` | Tier 3 (Starter) |
-| 48 | Hausa | `ha` | Tier 3 (Starter) |
-| 49 | Hebrew | `he` | Tier 3 (Starter) |
-| 50 | Hindi | `hi` | Tier 1 (Curated) |
-| 51 | Hungarian | `hu` | Tier 1 (Curated) |
-| 52 | Icelandic | `is` | Tier 1 (Curated) |
-| 53 | Indonesian | `id` | Tier 1 (Curated) |
-| 54 | Irish | `ga` | Tier 3 (Starter) |
-| 55 | Italian | `it` | Tier 1 (Curated) |
-| 56 | Japanese | `ja` | Tier 1 (Curated) |
-| 57 | Japanese (Kansai) | `ja-kansai` | Tier 2 (Regional) |
-| 58 | Javanese | `jv` | Tier 3 (Starter) |
-| 59 | Kannada | `kn` | Tier 1 (Curated) |
-| 60 | Kazakh | `kk` | Tier 3 (Starter) |
-| 61 | Khmer | `km` | Tier 1 (Curated) |
-| 62 | Kinyarwanda | `rw` | Tier 3 (Starter) |
-| 63 | Korean | `ko` | Tier 1 (Curated) |
-| 64 | Kurdish (Kurmanji) | `ku` | Tier 3 (Starter) |
-| 65 | Kurdish (Sorani) | `ckb` | Tier 3 (Starter) |
-| 66 | Kyrgyz | `ky` | Tier 3 (Starter) |
-| 67 | Lao | `lo` | Tier 3 (Starter) |
-| 68 | Latvian | `lv` | Tier 1 (Curated) |
-| 69 | Lithuanian | `lt` | Tier 1 (Curated) |
-| 70 | Macedonian | `mk` | Tier 1 (Curated) |
-| 71 | Malagasy | `mg` | Tier 3 (Starter) |
-| 72 | Malay | `ms` | Tier 1 (Curated) |
-| 73 | Malayalam | `ml` | Tier 1 (Curated) |
-| 74 | Maltese | `mt` | Tier 1 (Curated) |
-| 75 | Marathi | `mr` | Tier 1 (Curated) |
-| 76 | Mongolian | `mn` | Tier 1 (Curated) |
-| 77 | Nepali | `ne` | Tier 3 (Starter) |
-| 78 | Norwegian (Bokmål) | `no` | Tier 1 (Curated) |
-| 79 | Norwegian (Nynorsk) | `nn` | Tier 3 (Starter) |
-| 80 | Odia | `or` | Tier 3 (Starter) |
-| 81 | Pashto | `ps` | Tier 3 (Starter) |
-| 82 | Persian | `fa` | Tier 1 (Curated) |
-| 83 | Polish | `pl` | Tier 1 (Curated) |
-| 84 | Portuguese (Brazil) | `pt-br` | Tier 2 (Regional) |
-| 85 | Portuguese (Portugal) | `pt-pt` | Tier 1 (Curated) |
-| 86 | Punjabi | `pa` | Tier 1 (Curated) |
-| 87 | Romanian | `ro` | Tier 1 (Curated) |
-| 88 | Russian | `ru` | Tier 1 (Curated) |
-| 89 | Sardinian | `sc` | Tier 3 (Starter) |
-| 90 | Serbian | `sr` | Tier 1 (Curated) |
-| 91 | Shona | `sn` | Tier 3 (Starter) |
-| 92 | Silesian | `szl` | Tier 3 (Starter) |
-| 93 | Simplified Chinese (China) | `zh-cn` | Tier 1 (Curated) |
-| 94 | Sinhala | `si` | Tier 3 (Starter) |
-| 95 | Slovak | `sk` | Tier 1 (Curated) |
-| 96 | Slovenian | `sl` | Tier 1 (Curated) |
-| 97 | Somali | `so` | Tier 3 (Starter) |
-| 98 | Spanish | `es` | Tier 1 (Curated) |
-| 99 | Spanish (Spain) | `es-es` | Tier 2 (Regional) |
-| 100 | Spanish (Latin America) | `es-419` | Tier 2 (Regional) |
-| 101 | Spanish (Mexico) | `es-mx` | Tier 2 (Regional) |
-| 102 | Swahili | `sw` | Tier 1 (Curated) |
-| 103 | Swedish | `sv` | Tier 1 (Curated) |
-| 104 | Syriac | `syr` | Tier 3 (Starter) |
-| 105 | Tajik | `tg` | Tier 3 (Starter) |
-| 106 | Tamazight | `zgh` | Tier 3 (Starter) |
-| 107 | Tamil | `ta` | Tier 1 (Curated) |
-| 108 | Tatar | `tt` | Tier 3 (Starter) |
-| 109 | Telugu | `te` | Tier 1 (Curated) |
-| 110 | Tetun | `tet` | Tier 1 (Curated) |
-| 111 | Thai | `th` | Tier 1 (Curated) |
-| 112 | Traditional Chinese (Hong Kong) | `zh-hk` | Tier 2 (Regional) |
-| 113 | Traditional Chinese (Taiwan) | `zh-tw` | Tier 2 (Regional) |
-| 114 | Turkish | `tr` | Tier 1 (Curated) |
-| 115 | Ukrainian | `uk` | Tier 1 (Curated) |
-| 116 | Urdu | `ur` | Tier 1 (Curated) |
-| 117 | Uzbek | `uz` | Tier 1 (Curated) |
-| 118 | Vietnamese | `vi` | Tier 1 (Curated) |
-| 119 | Welsh | `cy` | Tier 1 (Curated) |
-| 120 | Zaza | `zza` | Tier 3 (Starter) |
-| 121 | Ainu | `ain` | Tier 3 (Starter) |
-| 122 | Akan | `ak` | Tier 3 (Starter) |
-| 123 | Aragonese | `an` | Tier 3 (Starter) |
-| 124 | Aymara | `ay` | Tier 3 (Starter) |
-| 125 | Balochi | `bal` | Tier 3 (Starter) |
-| 126 | Bambara | `bm` | Tier 3 (Starter) |
-| 127 | Bhojpuri | `bho` | Tier 3 (Starter) |
-| 128 | Dzongkha | `dz` | Tier 1 (Curated) |
-| 129 | Igbo | `ig` | Tier 3 (Starter) |
-| 130 | Yoruba | `yo` | Tier 3 (Starter) |
-
+| # | Language / Locale | Code | Coverage Tier | Words |
+|---|---|---|---|---|
+| 1 | Afrikaans | `af` | Tier 1 (Curated) | 256 |
+| 2 | Albanian | `sq` | Tier 1 (Curated) | 179 |
+| 3 | Amharic | `am` | Tier 1 (Curated) | 50 |
+| 4 | Arabic | `ar` | Tier 1 (Curated) | 1.271 |
+| 5 | Armenian | `hy` | Tier 1 (Curated) | 267 |
+| 6 | Assamese | `as` | Tier 3 (Starter) | 6 |
+| 7 | Azerbaijani | `az` | Tier 1 (Curated) | 37 |
+| 8 | Basque | `eu` | Tier 1 (Curated) | 48 |
+| 9 | Belarusian | `be` | Tier 1 (Curated) | 118 |
+| 10 | Bengali | `bn` | Tier 1 (Curated) | 11 |
+| 11 | Bosnian | `bs` | Tier 3 (Starter) | 7 |
+| 12 | Breton | `br` | Tier 3 (Starter) | 5 |
+| 13 | Bulgarian | `bg` | Tier 1 (Curated) | 336 |
+| 14 | Burmese | `my` | Tier 1 (Curated) | 81 |
+| 15 | Catalan | `ca` | Tier 1 (Curated) | 136 |
+| 16 | Cebuano | `ceb` | Tier 1 (Curated) | 18 |
+| 17 | Corsican | `co` | Tier 3 (Starter) | 5 |
+| 18 | Croatian | `hr` | Tier 1 (Curated) | 242 |
+| 19 | Czech | `cs` | Tier 1 (Curated) | 224 |
+| 20 | Danish | `da` | Tier 1 (Curated) | 185 |
+| 21 | Dutch | `nl` | Tier 1 (Curated) | 1.224 |
+| 22 | Dutch (Belgium) | `nl-be` | Tier 2 (Regional) | 1.229 (5 + 1.224 base) |
+| 23 | English (UK) | `en-gb` | Tier 2 (Regional) | 12.674 (9 + 12.665 base) |
+| 24 | English (US) | `en-us` | Tier 1 (Curated) | 12.665 |
+| 25 | English (Australia) | `en-au` | Tier 2 (Regional) | 12.671 (6 + 12.665 base) |
+| 26 | English (Canada) | `en-ca` | Tier 2 (Regional) | 12.669 (4 + 12.665 base) |
+| 27 | English (India) | `en-in` | Tier 2 (Regional) | 12.671 (6 + 12.665 base) |
+| 28 | English (Singapore) | `en-sg` | Tier 2 (Regional) | 12.672 (7 + 12.665 base) |
+| 29 | English (New Zealand) | `en-nz` | Tier 2 (Regional) | 12.669 (4 + 12.665 base) |
+| 30 | English (Ireland) | `en-ie` | Tier 2 (Regional) | 12.671 (6 + 12.665 base) |
+| 31 | English (South Africa) | `en-za` | Tier 2 (Regional) | 12.672 (7 + 12.665 base) |
+| 32 | Esperanto | `eo` | Tier 1 (Curated) | 50 |
+| 33 | Estonian | `et` | Tier 1 (Curated) | 174 |
+| 34 | Faroese | `fo` | Tier 3 (Starter) | 5 |
+| 35 | Filipino | `fil` | Tier 1 (Curated) | 165 |
+| 36 | Finnish | `fi` | Tier 1 (Curated) | 317 |
+| 37 | French (Canada) | `fr-ca` | Tier 2 (Regional) | 3.716 (8 + 3.708 base) |
+| 38 | French (France) | `fr-fr` | Tier 1 (Curated) | 3.708 |
+| 39 | Frisian | `fy` | Tier 3 (Starter) | 5 |
+| 40 | Fula | `ff` | Tier 3 (Starter) | 5 |
+| 41 | Galician | `gl` | Tier 1 (Curated) | 74 |
+| 42 | Georgian | `ka` | Tier 3 (Starter) | 4 |
+| 43 | German | `de` | Tier 1 (Curated) | 621 |
+| 44 | Greek | `el` | Tier 1 (Curated) | 247 |
+| 45 | Guarani | `gn` | Tier 3 (Starter) | 4 |
+| 46 | Gujarati | `gu` | Tier 1 (Curated) | 11 |
+| 47 | Haitian Creole | `ht` | Tier 3 (Starter) | 6 |
+| 48 | Hausa | `ha` | Tier 3 (Starter) | 5 |
+| 49 | Hebrew | `he` | Tier 3 (Starter) | 6 |
+| 50 | Hindi | `hi` | Tier 1 (Curated) | 755 |
+| 51 | Hungarian | `hu` | Tier 1 (Curated) | 296 |
+| 52 | Icelandic | `is` | Tier 1 (Curated) | 137 |
+| 53 | Indonesian | `id` | Tier 1 (Curated) | 582 |
+| 54 | Irish | `ga` | Tier 3 (Starter) | 5 |
+| 55 | Italian | `it` | Tier 1 (Curated) | 1.749 |
+| 56 | Japanese | `ja` | Tier 1 (Curated) | 420 |
+| 57 | Japanese (Kansai) | `ja-kansai` | Tier 2 (Regional) | 425 (5 + 420 base) |
+| 58 | Javanese | `jv` | Tier 3 (Starter) | 21 |
+| 59 | Kannada | `kn` | Tier 1 (Curated) | 132 |
+| 60 | Kazakh | `kk` | Tier 3 (Starter) | 5 |
+| 61 | Khmer | `km` | Tier 1 (Curated) | 15 |
+| 62 | Kinyarwanda | `rw` | Tier 3 (Starter) | 4 |
+| 63 | Korean | `ko` | Tier 1 (Curated) | 3.071 |
+| 64 | Kurdish (Kurmanji) | `ku` | Tier 3 (Starter) | 5 |
+| 65 | Kurdish (Sorani) | `ckb` | Tier 3 (Starter) | 5 |
+| 66 | Kyrgyz | `ky` | Tier 3 (Starter) | 4 |
+| 67 | Lao | `lo` | Tier 3 (Starter) | 5 |
+| 68 | Latvian | `lv` | Tier 1 (Curated) | 198 |
+| 69 | Lithuanian | `lt` | Tier 1 (Curated) | 158 |
+| 70 | Macedonian | `mk` | Tier 1 (Curated) | 192 |
+| 71 | Malagasy | `mg` | Tier 3 (Starter) | 4 |
+| 72 | Malay | `ms` | Tier 1 (Curated) | 201 |
+| 73 | Malayalam | `ml` | Tier 1 (Curated) | 388 |
+| 74 | Maltese | `mt` | Tier 1 (Curated) | 132 |
+| 75 | Marathi | `mr` | Tier 1 (Curated) | 238 |
+| 76 | Mongolian | `mn` | Tier 1 (Curated) | 101 |
+| 77 | Nepali | `ne` | Tier 3 (Starter) | 6 |
+| 78 | Norwegian (Bokmål) | `no` | Tier 1 (Curated) | 171 |
+| 79 | Norwegian (Nynorsk) | `nn` | Tier 3 (Starter) | 178 (7 + 171 base) |
+| 80 | Odia | `or` | Tier 3 (Starter) | 5 |
+| 81 | Pashto | `ps` | Tier 3 (Starter) | 5 |
+| 82 | Persian | `fa` | Tier 1 (Curated) | 619 |
+| 83 | Polish | `pl` | Tier 1 (Curated) | 8.971 |
+| 84 | Portuguese (Brazil) | `pt-br` | Tier 2 (Regional) | 583 (8 + 575 base) |
+| 85 | Portuguese (Portugal) | `pt-pt` | Tier 1 (Curated) | 575 |
+| 86 | Punjabi | `pa` | Tier 1 (Curated) | 16 |
+| 87 | Romanian | `ro` | Tier 1 (Curated) | 290 |
+| 88 | Russian | `ru` | Tier 1 (Curated) | 4.948 |
+| 89 | Sardinian | `sc` | Tier 3 (Starter) | 5 |
+| 90 | Serbian | `sr` | Tier 1 (Curated) | 459 |
+| 91 | Shona | `sn` | Tier 3 (Starter) | 5 |
+| 92 | Silesian | `szl` | Tier 3 (Starter) | 5 |
+| 93 | Simplified Chinese (China) | `zh-cn` | Tier 1 (Curated) | 1.554 |
+| 94 | Sinhala | `si` | Tier 3 (Starter) | 5 |
+| 95 | Slovak | `sk` | Tier 1 (Curated) | 586 |
+| 96 | Slovenian | `sl` | Tier 1 (Curated) | 167 |
+| 97 | Somali | `so` | Tier 3 (Starter) | 5 |
+| 98 | Spanish | `es` | Tier 1 (Curated) | 1.651 |
+| 99 | Spanish (Spain) | `es-es` | Tier 2 (Regional) | 1.658 (7 + 1.651 base) |
+| 100 | Spanish (Latin America) | `es-419` | Tier 2 (Regional) | 1.658 (7 + 1.651 base) |
+| 101 | Spanish (Mexico) | `es-mx` | Tier 2 (Regional) | 1.660 (9 + 1.651 base) |
+| 102 | Swahili | `sw` | Tier 1 (Curated) | 21 |
+| 103 | Swedish | `sv` | Tier 1 (Curated) | 245 |
+| 104 | Syriac | `syr` | Tier 3 (Starter) | 4 |
+| 105 | Tajik | `tg` | Tier 3 (Starter) | 5 |
+| 106 | Tamazight | `zgh` | Tier 3 (Starter) | 4 |
+| 107 | Tamil | `ta` | Tier 1 (Curated) | 119 |
+| 108 | Tatar | `tt` | Tier 3 (Starter) | 5 |
+| 109 | Telugu | `te` | Tier 1 (Curated) | 317 |
+| 110 | Tetun | `tet` | Tier 1 (Curated) | 11 |
+| 111 | Thai | `th` | Tier 1 (Curated) | 1.715 |
+| 112 | Traditional Chinese (Hong Kong) | `zh-hk` | Tier 2 (Regional) | 1.563 (9 + 1.554 base) |
+| 113 | Traditional Chinese (Taiwan) | `zh-tw` | Tier 2 (Regional) | 1.563 (9 + 1.554 base) |
+| 114 | Turkish | `tr` | Tier 1 (Curated) | 370 |
+| 115 | Ukrainian | `uk` | Tier 1 (Curated) | 205 |
+| 116 | Urdu | `ur` | Tier 1 (Curated) | 19 |
+| 117 | Uzbek | `uz` | Tier 1 (Curated) | 102 |
+| 118 | Vietnamese | `vi` | Tier 1 (Curated) | 790 |
+| 119 | Welsh | `cy` | Tier 1 (Curated) | 169 |
+| 120 | Zaza | `zza` | Tier 3 (Starter) | 5 |
+| 121 | Ainu | `ain` | Tier 3 (Starter) | 4 |
+| 122 | Akan | `ak` | Tier 3 (Starter) | 5 |
+| 123 | Aragonese | `an` | Tier 3 (Starter) | 5 |
+| 124 | Aymara | `ay` | Tier 3 (Starter) | 3 |
+| 125 | Balochi | `bal` | Tier 3 (Starter) | 5 |
+| 126 | Bambara | `bm` | Tier 3 (Starter) | 5 |
+| 127 | Bhojpuri | `bho` | Tier 3 (Starter) | 6 |
+| 128 | Dzongkha | `dz` | Tier 1 (Curated) | 86 |
+| 129 | Igbo | `ig` | Tier 3 (Starter) | 5 |
+| 130 | Yoruba | `yo` | Tier 3 (Starter) | 6 |
 </details>
+
+> Words = effective entries per locale. Regional rows show `own (+ base inherited)`,
+> e.g. `en-au` ships 6 Australian terms on top of the 12,665-word `en-us` base.
+> Regenerate this table with `scripts/lang_table.py` after dataset changes.
 
 ## How it works
 
