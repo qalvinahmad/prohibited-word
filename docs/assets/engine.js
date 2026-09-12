@@ -337,6 +337,20 @@
     datasetInfo: function () { return { version: DB.version, released: DB.meta && DB.meta.released, langs: Object.keys(DB.langs || {}).length }; },
     validate: validate,
     contains: function (text, opts) { return !validate(text, opts).isValid; },
+    censor: function (text, mask, opts) {
+      mask = mask || '*';
+      var r = validate(text, opts);
+      var out = String(text == null ? '' : text);
+      var done = {};
+      (r.found || []).forEach(function (f) {
+        if (f.action !== 'block' || f.index < 0 || done[f.index]) return;
+        done[f.index] = true;
+        var rep = '';
+        for (var i = 0; i < f.word.length; i++) rep += mask;
+        out = out.slice(0, f.index) + rep + out.slice(f.index + f.word.length);
+      });
+      return out;
+    },
     normalize: normalize,
     parseLocale: parseLocale
   };

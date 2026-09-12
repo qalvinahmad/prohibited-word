@@ -1,88 +1,313 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>prohibited-word — form profanity validation for 130 languages &amp; locales</title>
-  <meta name="description" content="Offline-first profanity filter for forms: 130 languages &amp; locales, locale + region + emoji + severity. npm, pub.dev, PyPI, Go, SPM, CocoaPods, Homebrew.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f46e5'/%3E%3Cpath d='M9 16.5l5 5 9-11' stroke='white' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <title>prohibited-word — Form Profanity &amp; Content Validation (130 Languages)</title>
+  <meta name="description" content="Offline-first profanity filter for forms across 130 languages and locales. Multi-layer context: base profanity, regional taboos, PII/scam, and cultural gestures (e.g. 👍).">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366f1'/%3E%3Cpath d='M9 16.5l5 5 9-11' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-<nav class="top"><div class="wrap">
-  <a class="brand" href="#">prohibited-word</a>
-  <div class="links">
-    <a href="#demo">Live demo</a>
-    <a href="#install">Install</a>
-    <a href="https://github.com/qalvinahmad/prohibited-word">GitHub</a>
-  </div>
-</div></nav>
 
-<div class="wrap">
-  <header class="hero">
-    <h1>prohibited-word</h1>
-    <p>Form profanity validation for <b>130 languages &amp; locales</b> — with locale, region,
-    emoji and severity layers. Offline-first. One monorepo, seven registries.</p>
-    <div class="badges">
-      <a href="https://www.npmjs.com/package/prohibited-word"><img alt="npm" src="https://img.shields.io/npm/v/prohibited-word?logo=npm"></a>
-      <a href="https://pub.dev/packages/prohibited_word"><img alt="pub" src="https://img.shields.io/pub/v/prohibited_word?logo=dart"></a>
-      <a href="https://pub.dev/packages/prohibited_word/score"><img alt="pub points" src="https://img.shields.io/pub/points/prohibited_word"></a>
-      <a href="https://pypi.org/project/prohibited-word/"><img alt="pypi" src="https://img.shields.io/pypi/v/prohibited-word?logo=pypi"></a>
-      <a href="https://github.com/qalvinahmad/prohibited-word/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
-      <a href="https://github.com/qalvinahmad/prohibited-word/blob/main/docs/CONTRIBUTING-langs.md"><img alt="prs" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></a>
+  <!-- Top Navbar with Icon-Only Actions -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <a class="brand" href="#" aria-label="prohibited-word home">
+        <span class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </span>
+        <span class="brand-name">prohibited-word</span>
+        <span class="brand-badge">130 Locales</span>
+      </a>
+
+      <!-- Icon-only navbar links -->
+      <nav class="nav-icons" aria-label="Project links">
+        <a href="https://github.com/qalvinahmad/prohibited-word" class="icon-btn" title="GitHub Repository" aria-label="GitHub Repository" target="_blank" rel="noopener noreferrer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+        </a>
+
+        <a href="https://www.npmjs.com/package/prohibited-word" class="icon-btn" title="npm Package" aria-label="npm Package" target="_blank" rel="noopener noreferrer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M0 7.334v9.332h7.999v-7.332h4.001v7.332h12v-9.332h-24zm4.001 7.332h-2.001v-5.333h2.001v5.333zm7.999 0h-2.001v-5.333h2.001v5.333zm8 0h-2.001v-5.333h2.001v5.333z"/>
+          </svg>
+        </a>
+
+        <a href="https://pypi.org/project/prohibited-word/" class="icon-btn" title="PyPI (Python)" aria-label="PyPI Package" target="_blank" rel="noopener noreferrer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11.914 0C5.833 0 6.2 2.646 6.2 2.646l.007 2.742h5.807v.827H3.94S0 5.75 0 11.855c0 6.104 3.435 5.908 3.435 5.908h2.052v-2.883s-.112-3.435 3.376-3.435h5.783v-.845H8.863s-3.32.06-3.32-3.266c0-3.324 2.894-3.238 2.894-3.238h8.508s2.793-.057 2.793 3.324v2.544h-2.04v-1.127H8.863v.845h8.84s3.435-.196 3.435-6.104C21.138 0 11.914 0 11.914 0zM8.704 1.706a.85.85 0 11.002 1.701.85.85 0 01-.002-1.701zm3.382 22.294c6.08 0 5.714-2.646 5.714-2.646l-.007-2.742H11.986v-.827h8.073s3.94.465 3.94-5.64c0-6.104-3.435-5.908-3.435-5.908h-2.052v2.883s.112 3.435-3.376 3.435h-5.783v.845h5.783s3.32-.06 3.32 3.266c0 3.324-2.894 3.238-2.894 3.238H7.132s-2.793.057-2.793-3.324v-2.544h2.04v1.127h8.835v-.845H6.374s-3.435.196-3.435 6.104c0 4.398 9.147 4.398 9.147 4.398zm3.21-1.706a.85.85 0 11-.002-1.701.85.85 0 01.002-1.701z"/>
+          </svg>
+        </a>
+
+        <a href="https://pub.dev/packages/prohibited_word" class="icon-btn" title="pub.dev (Flutter &amp; Dart)" aria-label="pub.dev Package" target="_blank" rel="noopener noreferrer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14.314 0L2.3 12 6 15.7 21.686 0h-7.372zm-7.62 13.978L0 20.672 3.328 24l6.694-6.694-3.328-3.328zm10.749-3.329l-3.329 3.329 6.558 6.558H24l-6.557-9.887z"/>
+          </svg>
+        </a>
+
+        <button id="theme-toggle" class="icon-btn" type="button" title="Toggle Theme (Dark / Light)" aria-label="Toggle Theme">
+          <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </nav>
     </div>
   </header>
 
-  <section class="stats">
-    <div class="stat"><b id="stat-langs">130</b><span>languages</span></div>
-    <div class="stat"><b id="stat-words">–</b><span>words &amp; phrases</span></div>
-    <div class="stat"><b id="stat-regions">–</b><span>regions</span></div>
-    <div class="stat"><b id="stat-emoji">–</b><span>emoji rules</span></div>
-  </section>
+  <div class="wrap">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        <span>v0.1.0 · Fast O(N) Engine · 130 Locales</span>
+      </div>
+      <h1 class="hero-title">Form Profanity &amp; Content Filter</h1>
+      <p class="hero-subtitle">
+        Validasi sensor kata untuk formulir &amp; komentar pengguna. Mendukung <b>130 bahasa &amp; dialek</b> dengan konteks budaya ganda (bahasa + regional), emoji/gestur tabu (seperti 👍), serta deteksi PII &amp; penipuan.
+      </p>
 
-  <section class="card" id="demo">
-    <h2>Live demo</h2>
-    <p class="desc">Runs entirely in your browser using the real dataset (words.json v4). Try leet-speak, separator evasion, locales and emoji.</p>
-    <div class="presets" id="presets"></div>
-    <textarea id="demo-input" placeholder="Type something to validate…"></textarea>
-    <div class="demo-controls">
-      <label>Locale
-        <select id="demo-locale"></select>
-      </label>
-      <label>Min severity
-        <select id="demo-sev">
-          <option value="1">1 — everything</option>
-          <option value="2" selected>2 — offensive+</option>
-          <option value="3">3 — severe slurs only</option>
-        </select>
-      </label>
-      <span class="detectors">
-        <label><input type="checkbox" id="det-profanity" checked> profanity</label>
-        <label><input type="checkbox" id="det-pii"> pii</label>
-        <label><input type="checkbox" id="det-scam"> scam</label>
-        <label><input type="checkbox" id="det-sensitive"> sensitive</label>
-      </span>
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="stat-val" id="stat-langs">130</span>
+          <span class="stat-lbl">Bahasa &amp; Dialek</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-val" id="stat-words">–</span>
+          <span class="stat-lbl">Kata &amp; Frasa</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-val" id="stat-regions">–</span>
+          <span class="stat-lbl">Regional Tabu</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-val" id="stat-emoji">–</span>
+          <span class="stat-lbl">Aturan Gestur / Emoji</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Live Demo Card: Clean Single Form Field -->
+    <section class="card demo-section" id="demo">
+      <div class="section-head">
+        <h2 class="section-title">Uji Validasi Interaktif</h2>
+        <p class="section-desc">Ketik kalimat atau coba salah satu preset untuk menguji sensor otomatis secara instan langsung di browser.</p>
+      </div>
+
+      <!-- The Simplified Form Text Field -->
+      <div class="form-container">
+        <div class="input-wrapper" id="input-wrapper">
+          <span class="input-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input 
+            type="text" 
+            id="demo-input" 
+            class="clean-input" 
+            placeholder="Ketik kata atau kalimat untuk divalidasi (contoh: 'kamu anjing', 'good 👍', '4nj1ng')..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button type="button" id="clear-btn" class="clear-btn" title="Hapus teks" aria-label="Hapus teks" style="display: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Controls Toolbar (Locale, Severity, Detectors) -->
+        <div class="controls-toolbar">
+          <div class="select-group">
+            <label for="demo-locale" class="control-label">Locale / Bahasa</label>
+            <div class="select-box">
+              <select id="demo-locale"></select>
+            </div>
+          </div>
+
+          <div class="select-group">
+            <label for="demo-sev" class="control-label">Batas Severity</label>
+            <div class="select-box">
+              <select id="demo-sev">
+                <option value="1">1 — Semua Pelanggaran</option>
+                <option value="2" selected>2 — Kata Kasar / Ofensif+</option>
+                <option value="3">3 — Hanya Sangat Kasar (Slurs)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="detectors-group">
+            <span class="control-label">Detektor Aktif</span>
+            <div class="chips-toggle">
+              <label class="toggle-chip">
+                <input type="checkbox" id="det-profanity" checked>
+                <span>Profanity</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" id="det-pii">
+                <span>PII</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" id="det-scam">
+                <span>Scam</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" id="det-sensitive">
+                <span>Sensitif</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Test Presets -->
+        <div class="presets-container">
+          <span class="presets-label">Coba Preset:</span>
+          <div class="presets-list" id="presets"></div>
+        </div>
+      </div>
+
+      <!-- Empty State: Displayed when input is empty -->
+      <div id="empty-state" class="empty-state">
+        <div class="empty-state-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="4"/>
+            <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M18 12h.01M8 16h8"/>
+          </svg>
+        </div>
+        <p class="empty-state-title">Siap untuk memvalidasi teks</p>
+        <p class="empty-state-desc">Ketik teks pada kolom di atas atau klik salah satu tombol preset untuk melihat hasil sensor &amp; analisis secara real-time.</p>
+      </div>
+
+      <!-- Result Container: ONLY displayed when user inputs text -->
+      <div id="demo-result" class="demo-result" style="display: none;">
+        <!-- Status Banner -->
+        <div id="result-status-banner" class="status-banner">
+          <div class="status-indicator">
+            <span class="status-icon" id="status-icon"></span>
+            <div class="status-texts">
+              <span class="status-heading" id="status-heading">Status</span>
+              <span class="status-subtext" id="status-subtext">Penjelasan status</span>
+            </div>
+          </div>
+          <div class="status-meta">
+            <span class="badge-pill" id="sev-badge">Severity 0</span>
+            <span class="badge-pill latency-pill" id="latency-badge">⚡ 0.0 ms</span>
+          </div>
+        </div>
+
+        <!-- Censored / Masked Preview -->
+        <div class="preview-box">
+          <div class="preview-header">
+            <span class="preview-label">Hasil Sensor Otomatis (Censored Text):</span>
+            <button type="button" id="copy-clean-btn" class="mini-copy-btn" title="Salin teks yang telah disensor">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>Salin Teks Bersih</span>
+            </button>
+          </div>
+          <div class="censored-output" id="censored-output">–</div>
+        </div>
+
+        <!-- In-Context Highlighted Sentence -->
+        <div class="preview-box" id="highlight-box" style="display: none;">
+          <div class="preview-header">
+            <span class="preview-label">Penandaan Kata dalam Konteks (Highlighted):</span>
+          </div>
+          <div class="highlighted-output" id="highlighted-output"></div>
+        </div>
+
+        <!-- Violations Breakdown -->
+        <div class="violations-box" id="violations-box" style="display: none;">
+          <div class="violations-header">
+            <span class="violations-title">Kata &amp; Simbol Terdeteksi:</span>
+            <span class="violations-count" id="violations-count">0 temuan</span>
+          </div>
+          <div class="chips-grid" id="chips-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Source Code & SDK Integration Tabs -->
+    <section class="card code-section" id="install">
+      <div class="section-head">
+        <h2 class="section-title">Integrasi SDK &amp; Source Code</h2>
+        <p class="section-desc">Gunakan arsitektur yang sama di seluruh stack teknologi Anda. Pilih bahasa pemrograman di bawah untuk melihat instruksi instalasi dan contoh implementasi:</p>
+      </div>
+
+      <!-- Languages Tab Bar -->
+      <div class="tab-bar" id="tabs" role="tablist"></div>
+
+      <!-- macOS Terminal Code Card -->
+      <div class="terminal-card">
+        <div class="terminal-header">
+          <div class="window-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <span class="terminal-title" id="terminal-tab-title">example.js</span>
+          <button type="button" class="copy-code-btn" id="copy-code-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <span id="copy-code-text">Salin Kode</span>
+          </button>
+        </div>
+
+        <!-- Package Install One-Liner -->
+        <div class="install-bar">
+          <span class="install-prefix">$</span>
+          <code id="install-cmd">npm install prohibited-word</code>
+          <button type="button" class="mini-copy-btn" id="copy-install-btn" title="Salin perintah instalasi">
+            <span>Salin</span>
+          </button>
+        </div>
+
+        <!-- Main Source Code Snippet -->
+        <pre class="terminal-code"><code id="code-block"></code></pre>
+      </div>
+
+      <p class="note" id="maturity-note">Mendukung 130 bahasa dengan tingkatan keandalan (Tier 1 Verified, Tier 2 Regional/Jawa, Tier 3 Starter).</p>
+    </section>
+  </div>
+
+  <!-- Minimalist Footer -->
+  <footer class="site-footer">
+    <div class="wrap footer-content">
+      <p>
+        Lisensi MIT · Dataset dasar oleh <a href="https://github.com/master-wayne7/safe_text" target="_blank" rel="noopener noreferrer">safe_text</a> (Ronit Rameja) — lihat <a href="https://github.com/qalvinahmad/prohibited-word/blob/main/NOTICE.md" target="_blank" rel="noopener noreferrer">NOTICE</a>.
+      </p>
+      <p class="footer-sub">
+        Dikembangkan oleh <a href="https://github.com/qalvinahmad" target="_blank" rel="noopener noreferrer">qalvinahmad</a> · <a href="https://github.com/qalvinahmad/prohibited-word" target="_blank" rel="noopener noreferrer">Kontribusi Bahasa &amp; PR Terbuka</a>
+      </p>
     </div>
-    <div id="demo-result"><div class="status clean">Loading dataset…</div></div>
-  </section>
+  </footer>
 
-  <section class="card" id="install">
-    <h2>Install</h2>
-    <p class="desc">Same API everywhere: <code>validate(text, { locale })</code> returns <code>{ isValid, maxSeverity, found[] }</code>.</p>
-    <div class="tabs" id="tabs"></div>
-    <div class="code-head"><button id="copy-btn">Copy</button></div>
-    <pre id="code-block"></pre>
-    <p class="note" id="maturity-note"></p>
-  </section>
-</div>
-
-<footer>
-  MIT licensed · wordlist base by <a href="https://github.com/master-wayne7/safe_text">safe_text</a> (Ronit Rameja) —
-  see <a href="https://github.com/qalvinahmad/prohibited-word/blob/main/NOTICE.md">NOTICE</a> ·
-  <a href="https://github.com/qalvinahmad/prohibited-word">contribute a language</a>
-</footer>
-
-<script src="assets/engine.js"></script>
-<script src="assets/app.js"></script>
+  <script src="assets/engine.js"></script>
+  <script src="assets/app.js"></script>
 </body>
 </html>
