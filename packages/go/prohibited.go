@@ -30,6 +30,8 @@ type WordEntry struct {
 }
 
 type LangSpec struct {
+	Name     string      `json:"name,omitempty"`
+	Parent   string      `json:"parent,omitempty"`
 	Maturity string      `json:"maturity"`
 	Source   string      `json:"source"`
 	Words    []WordEntry `json:"words"`
@@ -273,10 +275,19 @@ func getEngine(o Options, langs []string, region string, minSev int, custom []st
 		}
 		return 2
 	}
+	activeLangs := make(map[string]bool)
+	for _, l := range langs {
+		lLow := strings.ToLower(l)
+		activeLangs[lLow] = true
+		if p, ok := db.Langs[lLow]; ok && p.Parent != "" {
+			activeLangs[strings.ToLower(p.Parent)] = true
+		}
+	}
 	for lang, spec := range db.Langs {
-		if !in(langs, lang) {
-			// in() returns true for empty list; explicit check:
-			if len(langs) > 0 {
+		if len(activeLangs) > 0 {
+			langLow := strings.ToLower(lang)
+			base := strings.Split(langLow, "-")[0]
+			if !activeLangs[langLow] && !activeLangs[base] {
 				continue
 			}
 		}
@@ -377,8 +388,13 @@ func Validate(text string, o Options) Result {
 	region := o.Region
 	if o.Locale != "" {
 		ll, rr := ParseLocale(o.Locale)
-		if len(langs) == 0 && ll != "" {
-			langs = []string{ll}
+		fullLoc := strings.ToLower(strings.ReplaceAll(o.Locale, "_", "-"))
+		if len(langs) == 0 {
+			if _, ok := db.Langs[fullLoc]; ok {
+				langs = []string{fullLoc}
+			} else if ll != "" {
+				langs = []string{ll}
+			}
 		}
 		if region == "" {
 			region = rr

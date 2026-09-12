@@ -10,7 +10,7 @@ public struct FoundWord: Sendable { public let word: String; public let category
 public struct ValidationResult: Sendable { public let isValid: Bool; public let maxSeverity: Int; public let found: [FoundWord] }
 
 private struct WordEntry: Decodable { let w: String; let s: Int?; let c: String? }
-private struct LangSpec: Decodable { let maturity: String?; let source: String?; let words: [WordEntry] }
+private struct LangSpec: Decodable { let name: String?; let parent: String?; let maturity: String?; let source: String?; let words: [WordEntry] }
 private struct RegionEntry: Decodable { let w: String; let lang: String; let s: Int?; let c: String? }
 private struct RegionSpec: Decodable { let note: String?; let source: String?; let add: [RegionEntry]?; let remove: [RegionEntry]? }
 private struct EmojiSpec: Decodable { let offensiveIn: [String]?; let severity: Int?; let note: String?; let source: String? }
@@ -98,18 +98,23 @@ private var cache: [String: Engine] = [:]
 private let cacheLock = NSLock()
 
 /// Ganti dataset aktif (mis. hasil fetchDataset) dan bersihkan cache.
-public func loadDataset(data: Data) throws {
-  wordDB = try JSONDecoder().decode(DB.self, from: data)
-  dictID = "\(wordDB.version ?? 0):\(wordDB.langs.count)"
-  cacheLock.lock(); cache = [:]; cacheLock.unlock()
+public func loadDataset(_ dbData: [String: Any]) {
+  guard let data = try? JSONSerialization.data(withJSONObject: dbData),
+        let db = try? JSONDecoder().decode(DB.self, from: data) else { return }
+  cacheLock.lock()
+  wordDB = db
+  dictID = "\(db.version ?? 0):\(db.langs.count)"
+  cache.removeAll()
+  cacheLock.unlock()
 }
+
 
 private func getEngine(langs: [String], region: String, categories: [String]?, minSeverity: Int, customWords: [String], whitelist: Set<String>) -> Engine {
   let key = "\(dictID)|\(langs.joined(separator: ","))|\(region)|\(categories?.joined(separator: ",") ?? "")|\(minSeverity)|\(customWords.joined(separator: ","))|\(whitelist.sorted().joined(separator: ","))"
-  cacheLock.lock(); let hit = cache[key]; cacheLock.unlock()
-  if let hit { return hit }
-  var entries: [Entry] = []; var free: [Bool] = []; var patterns: [String] = []
-  var seen = Set<String>()
+  cacheLock.lock()
+  if let hit = cache[key] { cacheLock.unlock(); return hit }
+  cacheLock.unlock()
+  var entries: [Entry] = []; var free: [Bool] = []; var patterns: [String] = []; var seen = Set<String>()
   func push(_ word: String, _ cat: String, _ sev: Int, _ via: String, _ lang: String?) {
     let w = word.lowercased()
     if w.isEmpty || whitelist.contains(w) { return }
@@ -127,8 +132,22 @@ private func getEngine(langs: [String], region: String, categories: [String]?, m
   if let rs = wordDB.regions?[region], let rem = rs.remove {
     for r in rem { remove.insert("\(r.w.lowercased())\u{0}\(r.lang)") }
   }
+  var activeLangs = Set<String>()
+  if !langs.isEmpty {
+    for t in langs {
+      let tLow = t.lowercased()
+      activeLangs.insert(tLow)
+      if let p = wordDB.langs[tLow]?.parent {
+        activeLangs.insert(p.lowercased())
+      }
+    }
+  }
   for (lang, spec) in wordDB.langs {
-    if !langs.isEmpty && !langs.contains(lang) { continue }
+    if !activeLangs.isEmpty {
+      let langLow = lang.lowercased()
+      let base = String(langLow.split(separator: "-").first ?? "")
+      if !activeLangs.contains(langLow) && !activeLangs.contains(base) { continue }
+    }
     for e in spec.words {
       let cat = e.c ?? "profanity"
       if let categories, !categories.contains(cat) { continue }
@@ -161,7 +180,17 @@ public func validate(_ text: String?, categories: [String]? = nil, lang: [String
   let original = text ?? ""
   if original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return ValidationResult(isValid: true, maxSeverity: 0, found: []) }
   let loc = parseLocale(locale)
-  let langs = lang ?? (loc.lang.map { [$0] } ?? [])
+  let fullLoc = (locale ?? "").lowercased().replacingOccurrences(of: "_", with: "-")
+  let langs: [String]
+  if let lang = lang {
+    langs = lang.map { $0.lowercased() }
+  } else if !fullLoc.isEmpty && wordDB.langs[fullLoc] != nil {
+    langs = [fullLoc]
+  } else if let l = loc.lang {
+    langs = [l]
+  } else {
+    langs = []
+  }
   let reg = region ?? loc.region ?? ""
   let white = Set(whitelist.map { $0.lowercased() })
   let eng = getEngine(langs: langs, region: reg, categories: categories, minSeverity: minSeverity, customWords: customWords.map { $0.lowercased() }, whitelist: white)

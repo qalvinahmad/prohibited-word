@@ -122,8 +122,22 @@ function getEngine(o) {
   if (o.region && DB.regions?.[o.region]?.remove) {
     for (const r of DB.regions[o.region].remove) remove.add(`${r.lang}\0${String(r.w).toLowerCase()}`);
   }
+  const activeLangs = [];
+  if (o.langs.length) {
+    for (const t of o.langs) {
+      const tLow = String(t).toLowerCase();
+      activeLangs.push(tLow);
+      const p = DB.langs?.[tLow]?.parent;
+      if (p) activeLangs.push(String(p).toLowerCase());
+    }
+  }
+
   for (const [lang, spec] of Object.entries(DB.langs ?? {})) {
-    if (o.langs.length && !o.langs.includes(lang)) continue;
+    if (activeLangs.length) {
+      const langLow = String(lang).toLowerCase();
+      const base = langLow.split('-')[0];
+      if (!activeLangs.includes(langLow) && !activeLangs.includes(base)) continue;
+    }
     for (const e of spec.words ?? []) {
       if (o.categories && !o.categories.includes(e.c ?? 'profanity')) continue;
       if (remove.has(`${lang}\0${String(e.w).toLowerCase()}`)) continue;
@@ -152,7 +166,15 @@ function getEngine(o) {
 
 function resolveOpts(opts = {}) {
   const loc = parseLocale(opts.locale);
-  const langOpt = opts.lang ?? (loc.lang ? [loc.lang] : null);
+  const fullLoc = opts.locale ? String(opts.locale).toLowerCase().replace('_', '-') : '';
+  let langOpt = opts.lang ? (Array.isArray(opts.lang) ? opts.lang.map((l) => String(l).toLowerCase()) : [String(opts.lang).toLowerCase()]) : null;
+  if (!langOpt) {
+    if (fullLoc && DB.langs?.[fullLoc]) {
+      langOpt = [fullLoc];
+    } else if (loc.lang) {
+      langOpt = [loc.lang.toLowerCase()];
+    }
+  }
   return {
     langs: langOpt ?? [],
     region: opts.region ?? loc.region ?? '',

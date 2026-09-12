@@ -1,7 +1,7 @@
 """Import wordlist -> packages/core/words.json (v3) + words-lite.json + Dart words.g.dart.
 
 Sumber base: safe_text (MIT (c) 2024 Ronit Rameja) + scripts/v3_data.py
-(43 bahasa, regions, emoji, severity).
+(130 bahasa & regional locales, Jawa sebagai satu-satunya bahasa daerah Indonesia).
 """
 import json
 import re
@@ -15,10 +15,27 @@ CORE = MONO / "packages" / "core"
 CURATED_PATH = CORE / "words.json"
 
 sys.path.insert(0, str(MONO / "scripts"))
-from v3_data import EXTRA_LANGS, REGIONS, EMOJI, SEVERITY_OVERRIDES, CURATED_CATEGORIES  # noqa: E402
+from v3_data import (  # noqa: E402
+    LANGUAGES_130,
+    EXTRA_LANGS,
+    REGIONS,
+    EMOJI,
+    SEVERITY_OVERRIDES,
+    CURATED_CATEGORIES,
+)
 
 TOKEN_RE = re.compile(r"'((?:[^'\\]|\\.)*)'")
 EMOJI_STRIP_RE = re.compile("[\uFE0F\U0001F3FB-\U0001F3FF]")
+
+UPSTREAM_MAP = {
+    "en": "en-us",
+    "fr": "fr-fr",
+    "pt": "pt-pt",
+    "zh": "zh-cn",
+    "kh": "km",
+}
+
+TARGET_CODES = {c: (num, name, tier) for num, name, c, tier in LANGUAGES_130}
 
 
 def unescape(s: str) -> str:
@@ -40,33 +57,34 @@ def main():
     curated: dict[tuple[str, str], str] = {}
     for lang, word, cat in CURATED_CATEGORIES:
         curated[(word.casefold(), lang)] = cat
-    try:
-        old = json.loads(CURATED_PATH.read_text(encoding="utf-8"))
-        for w in old.get("words", []):
-            if w.get("category") not in (None, "profanity"):
-                curated.setdefault((str(w["word"]).casefold(), w.get("lang", "")), w["category"])
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass
 
     base: dict[tuple[str, str], dict] = {}
-    for f in sorted(SRC_DIR.glob("*.dart")):
-        if f.name == "all.dart":
-            continue
-        lang = f.stem
-        for raw in parse_dart_file(f):
-            w = raw.strip()
-            if not w or (w.casefold(), lang) in base:
+    if SRC_DIR.exists():
+        for f in sorted(SRC_DIR.glob("*.dart")):
+            if f.name == "all.dart":
                 continue
-            base[(w.casefold(), lang)] = {"w": w, "s": 2}
-            if (w.casefold(), lang) in curated:
-                base[(w.casefold(), lang)]["c"] = curated[(w.casefold(), lang)]
+            stem = f.stem
+            target_code = UPSTREAM_MAP.get(stem, stem)
+            if target_code not in TARGET_CODES:
+                continue
+            for raw in parse_dart_file(f):
+                w = raw.strip()
+                if not w or (w.casefold(), target_code) in base:
+                    continue
+                base[(w.casefold(), target_code)] = {"w": w, "s": 2}
+                if (w.casefold(), target_code) in curated:
+                    base[(w.casefold(), target_code)]["c"] = curated[(w.casefold(), target_code)]
 
-    for lang, spec in EXTRA_LANGS.items():
-        for w in spec["words"]:
+    for code, spec in EXTRA_LANGS.items():
+        if code not in TARGET_CODES:
+            continue
+        for w in spec.get("words", []):
             w = w.strip()
-            if not w or (w.casefold(), lang) in base:
+            if not w or (w.casefold(), code) in base:
                 continue
-            base[(w.casefold(), lang)] = {"w": w, "s": 2}
+            base[(w.casefold(), code)] = {"w": w, "s": 2}
+            if (w.casefold(), code) in curated:
+                base[(w.casefold(), code)]["c"] = curated[(w.casefold(), code)]
 
     sev_applied = 0
     for lang, word, sev in SEVERITY_OVERRIDES:
@@ -79,13 +97,23 @@ def main():
     langs: dict[str, dict] = {}
     for (cf, lang), e in base.items():
         langs.setdefault(lang, {"words": []})["words"].append(e)
-    for lang, spec in EXTRA_LANGS.items():
-        langs.setdefault(lang, {"words": []})["maturity"] = spec["maturity"]
-        langs[lang]["source"] = spec["source"]
-    for lang in langs:
-        langs[lang].setdefault("maturity", "curated-upstream")
-        langs[lang].setdefault("source", "safe_text (MIT (c) 2024 Ronit Rameja)")
-        langs[lang]["words"].sort(key=lambda e: e["w"].casefold())
+
+    for code, (num, name, tier) in TARGET_CODES.items():
+        if code not in langs:
+            langs[code] = {"words": []}
+        langs[code]["name"] = name
+        langs[code]["order"] = num
+        langs[code]["maturity"] = tier
+        if code in EXTRA_LANGS:
+            langs[code]["source"] = EXTRA_LANGS[code].get("source", "curated list")
+            if "parent" in EXTRA_LANGS[code]:
+                langs[code]["parent"] = EXTRA_LANGS[code]["parent"]
+        else:
+            langs[code]["source"] = "safe_text (MIT (c) 2024 Ronit Rameja)"
+        langs[code]["words"].sort(key=lambda e: e["w"].casefold())
+
+    # Urutkan langs sesuai urutan nomor 1-130
+    langs = dict(sorted(langs.items(), key=lambda x: x[1].get("order", 999)))
 
     regions = {}
     for code, spec in REGIONS.items():
@@ -95,38 +123,67 @@ def main():
                 ok_remove.append(r)
             else:
                 print(f"WARN region remove tak cocok, dibuang: {code}:{r['lang']}:{r['w']}")
-        regions[code] = {"note": spec.get("note", ""), "source": spec.get("source", ""),
-                         "add": spec.get("add", []), "remove": ok_remove}
+        regions[code] = {
+            "note": spec.get("note", ""),
+            "source": spec.get("source", ""),
+            "add": spec.get("add", []),
+            "remove": ok_remove,
+        }
 
     emoji = {}
     for raw, spec in EMOJI.items():
         key = EMOJI_STRIP_RE.sub("", raw)
         emoji[key] = spec
 
-    full = {"version": 3,
-            "meta": {"source": "safe_text (MIT (c) 2024 Ronit Rameja) + v3_data.py",
-                     "released": date.today().isoformat(),
-                     "langs": len(langs)},
-            "langs": langs, "regions": regions, "emoji": emoji}
+    full = {
+        "version": 3,
+        "meta": {
+            "source": "safe_text (MIT (c) 2024 Ronit Rameja) + v3_data.py",
+            "released": date.today().isoformat(),
+            "langs": len(langs),
+        },
+        "langs": langs,
+        "regions": regions,
+        "emoji": emoji,
+    }
     CORE.mkdir(parents=True, exist_ok=True)
     (CORE / "words.json").write_text(json.dumps(full, ensure_ascii=False, indent=None), encoding="utf-8")
 
-    lite_langs = {"id", "en"}
-    lite = {"version": 3, "meta": full["meta"],
-            "langs": {k: v for k, v in langs.items() if k in lite_langs},
-            "regions": {}, "emoji": {k: v for k, v in emoji.items() if "*" in v["offensiveIn"]}}
+    lite_langs = {"id", "en-us"}
+    lite = {
+        "version": 3,
+        "meta": full["meta"],
+        "langs": {k: v for k, v in langs.items() if k in lite_langs},
+        "regions": {},
+        "emoji": {k: v for k, v in emoji.items() if "*" in v["offensiveIn"]},
+    }
     (CORE / "words-lite.json").write_text(json.dumps(lite, ensure_ascii=False, indent=None), encoding="utf-8")
 
-    lines = ["// GENERATED by scripts/import_safe_text.py — do not edit.",
-             "const kWordsByLang = <String, List<String>>{"]
+    lines = [
+        "// GENERATED by scripts/import_safe_text.py — do not edit.",
+        "const kWordsByLang = <String, List<String>>{",
+    ]
     for lang in sorted(langs):
         items = ", ".join("'" + dart_escape(e["w"]) + "'" for e in langs[lang]["words"])
         lines.append(f"  '{lang}': <String>[{items}],")
     lines.append("};")
+
     lines.append("const kLangMaturity = <String, String>{")
     for lang in sorted(langs):
         lines.append(f"  '{lang}': '{langs[lang]['maturity']}',")
     lines.append("};")
+
+    lines.append("const kLangNames = <String, String>{")
+    for lang in sorted(langs):
+        lines.append(f"  '{lang}': '{dart_escape(langs[lang]['name'])}',")
+    lines.append("};")
+
+    lines.append("const kLangParents = <String, String>{")
+    for lang in sorted(langs):
+        if "parent" in langs[lang]:
+            lines.append(f"  '{lang}': '{langs[lang]['parent']}',")
+    lines.append("};")
+
     lines.append("const kCategoryOverride = <String, String>{")
     cat_lines, sev_lines = [], []
     for lang in sorted(langs):
@@ -138,38 +195,46 @@ def main():
                 sev_lines.append(f"  {key}: {e['s']},")
     lines.extend(cat_lines)
     lines.append("};")
+
     lines.append("const kSeverityOverride = <String, int>{")
     lines.extend(sev_lines)
     lines.append("};")
+
     lines.append("const kRegionAdd = <String, List<String>>{")
     for c in sorted(regions):
         items = ", ".join(f"'{r['lang']}\\x00{dart_escape(r['w'])}'" for r in regions[c]["add"])
         lines.append(f"  '{c}': <String>[{items}],")
     lines.append("};")
+
     lines.append("const kRegionRemove = <String, List<String>>{")
     for c in sorted(regions):
         items = ", ".join(f"'{r['lang']}\\x00{dart_escape(r['w'])}'" for r in regions[c]["remove"])
         lines.append(f"  '{c}': <String>[{items}],")
     lines.append("};")
+
     lines.append("const kEmojiUniversal = <String>[")
     lines.extend(f"  '{dart_escape(k)}'," for k, v in emoji.items() if "*" in v["offensiveIn"])
     lines.append("];")
+
     lines.append("const kEmojiRegional = <String, List<String>>{")
     for k, v in emoji.items():
         regs = [r for r in v["offensiveIn"] if r != "*"]
         if regs:
             lines.append(f"  '{dart_escape(k)}': <String>[{', '.join(repr(r) for r in regs)}],")
     lines.append("};")
+
     g_path = MONO / "packages" / "dart" / "lib" / "src" / "words.g.dart"
     g_path.parent.mkdir(parents=True, exist_ok=True)
     out = "\n".join(lines) + "\n"
     g_path.write_text(out, encoding="utf-8")
 
     total = sum(len(v["words"]) for v in langs.values())
-    drafts = sum(1 for v in langs.values() if v["maturity"] != "curated-upstream")
-    print(f"langs: {len(langs)} (draft/seed: {drafts})  total: {total}  severity3: {sev_applied}")
-    print(f"full: {(CORE/'words.json').stat().st_size/1024:.0f} KB  lite: {(CORE/'words-lite.json').stat().st_size/1024:.0f} KB  g.dart: {g_path.stat().st_size/1024:.0f} KB")
+    drafts = sum(1 for v in langs.values() if v["maturity"] != "curated")
+    print(f"langs: {len(langs)} (regional/starter: {drafts})  total words: {total}  severity3: {sev_applied}")
+    print(
+        f"full: {(CORE/'words.json').stat().st_size/1024:.0f} KB  lite: {(CORE/'words-lite.json').stat().st_size/1024:.0f} KB  g.dart: {g_path.stat().st_size/1024:.0f} KB"
+    )
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

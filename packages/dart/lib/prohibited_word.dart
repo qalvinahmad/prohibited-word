@@ -166,8 +166,23 @@ _Engine _getEngine(List<String> langs, String region, List<String>? categories, 
   final removes = _remoteDb != null
       ? <String>{}
       : (kRegionRemove[region] ?? []).toSet();
+  final activeLangs = <String>{};
+  if (langs.isNotEmpty) {
+    for (final t in langs) {
+      final tLow = t.toLowerCase();
+      activeLangs.add(tLow);
+      final p = _remoteDb != null
+          ? (_remoteDb!['langs']?[tLow]?['parent'] as String?)
+          : kLangParents[tLow];
+      if (p != null && p.isNotEmpty) activeLangs.add(p.toLowerCase());
+    }
+  }
   for (final l in _dbLangs()) {
-    if (langs.isNotEmpty && !langs.contains(l)) continue;
+    if (activeLangs.isNotEmpty) {
+      final lLow = l.toLowerCase();
+      final base = lLow.split('-')[0];
+      if (!activeLangs.contains(lLow) && !activeLangs.contains(base)) continue;
+    }
     for (final w in _dbLangWords(l)) {
       if (_remoteDb == null && removes.contains('$l\x00$w')) continue;
       final c = _dbCategory(l, w);
@@ -210,7 +225,11 @@ ValidationResult validate(String? text, {List<String>? categories, List<String>?
   final original = text ?? '';
   if (original.trim().isEmpty) return ValidationResult(true, 0, []);
   final loc = parseLocale(locale);
-  final langs = lang ?? (loc['lang'] != null ? [loc['lang']!] : <String>[]);
+  final fullLoc = (locale ?? '').toLowerCase().replaceAll('_', '-');
+  final langs = lang?.map((l) => l.toLowerCase()).toList() ??
+      (fullLoc.isNotEmpty && _dbLangs().contains(fullLoc)
+          ? [fullLoc]
+          : (loc['lang'] != null ? [loc['lang']!.toLowerCase()] : <String>[]));
   final reg = region ?? loc['region'] ?? '';
   final white = whitelist.map((w) => w.toLowerCase()).toSet();
   final eng = _getEngine(langs, reg, categories, minSeverity, customWords.map((w) => w.toLowerCase()).toList(), white);

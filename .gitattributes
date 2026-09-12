@@ -1,0 +1,10 @@
+packages/dart/lib/src/words.g.dart linguist-generated=true
+packages/js/src/words.json linguist-generated=true
+packages/js/words.json linguist-generated=true
+packages/python/src/prohibited_word/words.json linguist-generated=true
+packages/go/words.json linguist-generated=true
+packages/swift/Sources/ProhibitedWord/words.json linguist-generated=true
+docs/data/words.json linguist-generated=true
+packages/core/words.json linguist-generated=true
+packages/core/words-lite.json linguist-generated=true
+*.json linguist-generated=true

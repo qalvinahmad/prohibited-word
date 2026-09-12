@@ -139,9 +139,21 @@ def _engine(langs, region, categories, min_sev, custom, white):
     for r in reg.get("remove", []):
         remove.add((str(r["w"]).lower(), r["lang"]))
 
+    active_langs = []
+    if langs:
+        for t in langs:
+            t_low = str(t).lower()
+            active_langs.append(t_low)
+            p = (DB.get("langs") or {}).get(t_low, {}).get("parent")
+            if p:
+                active_langs.append(str(p).lower())
+
     for lang, spec in (DB.get("langs") or {}).items():
-        if langs and lang not in langs:
-            continue
+        if active_langs:
+            lang_low = str(lang).lower()
+            base = lang_low.split("-")[0]
+            if not (lang_low in active_langs or base in active_langs):
+                continue
         for e in spec.get("words", []):
             cat = e.get("c", "profanity")
             if categories and cat not in categories:
@@ -181,7 +193,15 @@ def validate(text, categories=None, lang=None, locale=None, region=None,
     if not original.strip():
         return {"is_valid": True, "max_severity": 0, "found": []}
     loc = parse_locale(locale)
-    langs = list(lang or ([loc["lang"]] if loc.get("lang") else []))
+    full_loc = str(locale).lower().replace("_", "-") if locale else ""
+    if lang:
+        langs = [str(l).lower() for l in lang]
+    elif full_loc and full_loc in (DB.get("langs") or {}):
+        langs = [full_loc]
+    elif loc.get("lang"):
+        langs = [loc["lang"].lower()]
+    else:
+        langs = []
     region = region or loc.get("region") or ""
     white = {str(w).lower() for w in (whitelist or [])}
     custom = [str(w).lower() for w in (custom_words or [])]
