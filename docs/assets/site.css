@@ -74,6 +74,10 @@ button.preset:hover { background: #e0e7ff; }
 }
 .status.clean { background: var(--ok-bg); color: var(--ok); }
 .status.flagged { background: var(--bad-bg); color: var(--bad); }
+.status.review { background: #fffbeb; color: #92400e; }
+.status.help { background: var(--accent-soft); color: var(--accent); }
+.detectors { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }
+.detectors input { accent-color: var(--accent); }
 .status .meta { font-weight: 400; font-size: 13px; opacity: 0.8; margin-left: auto; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chip {

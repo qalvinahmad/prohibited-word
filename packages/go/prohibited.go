@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -69,6 +70,16 @@ type SymbolSpec struct {
 	Source   string   `json:"source"`
 }
 
+type PhraseEntry struct {
+	T        string  `json:"t"`
+	Lang     string  `json:"lang"`
+	Conf     float64 `json:"conf"`
+	Src      string  `json:"src"`
+	Detector string  `json:"detector"`
+	Type     string  `json:"type"`
+	Action   string  `json:"action"`
+}
+
 type Dataset struct {
 	Version int                 `json:"version"`
 	Meta    map[string]any      `json:"meta"`
@@ -76,6 +87,7 @@ type Dataset struct {
 	Regions map[string]RegionSpec `json:"regions"`
 	Emoji   map[string]EmojiSpec  `json:"emoji"`
 	Symbols map[string]SymbolSpec `json:"symbols"`
+	Phrases map[string][]PhraseEntry `json:"phrases"`
 }
 
 type Found struct {
@@ -84,11 +96,16 @@ type Found struct {
 	Severity   int     `json:"severity"`
 	Via        string  `json:"via"`
 	Confidence float64 `json:"confidence"`
+	Detector   string  `json:"detector"`
+	Type       string  `json:"type"`
+	Action     string  `json:"action"`
 	Index      int     `json:"index"`
 }
 
 type Result struct {
 	IsValid     bool    `json:"isValid"`
+	NeedsReview bool    `json:"needsReview"`
+	NeedsHelp   bool    `json:"needsHelp"`
 	MaxSeverity int     `json:"maxSeverity"`
 	Found       []Found `json:"found"`
 }
@@ -100,6 +117,8 @@ type Options struct {
 	Region        string
 	MinSeverity   int
 	MinConfidence float64
+	Detectors     []string
+	Types         []string
 	CustomWords   []string
 	Whitelist     []string
 }
@@ -194,6 +213,218 @@ func ParseLocale(locale string) (lang, region string) {
 	return strings.ToLower(locale[:sep]), strings.ToUpper(locale[sep+1:])
 }
 
+func inList(list []string, v string) bool {
+	if len(list) == 0 {
+		return true
+	}
+	for _, x := range list {
+		if x == v {
+			return true
+		}
+	}
+	return false
+}
+
+var digitWordRe = regexp.MustCompile(`\b(nol|kosong|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|zero|one|two|three|four|five|six|seven|eight|nine|oh)\b`)
+var digitWordMap = map[string]string{
+	"nol": "0", "kosong": "0", "satu": "1", "dua": "2", "tiga": "3", "empat": "4",
+	"lima": "5", "enam": "6", "tujuh": "7", "delapan": "8", "sembilan": "9",
+	"zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5",
+	"six": "6", "seven": "7", "eight": "8", "nine": "9", "oh": "0",
+}
+var singleRunRe = regexp.MustCompile(`\b[a-z0-9](?: [a-z0-9])+\b`)
+var atRe = regexp.MustCompile(`[{\[(]\s*at\s*[\])}]|\sat\s`)
+var dotRe = regexp.MustCompile(`[{\[(]\s*dots?\s*[\])}]|\sdots?\s|\btitik\b`)
+var atDotSpaceRe = regexp.MustCompile(`\s*([@.])\s*`)
+
+func isDigitSep(r rune) bool { return r == ' ' || r == '.' || r == '(' || r == ')' || r == '-' }
+
+// Deobfuscate builds the PII/scam matching stream:
+// [at]->@, [dot]/titik->., digit words->digits, single-char runs joined,
+// digit-adjacent separators removed.
+func Deobfuscate(s string) string {
+	s = strings.ToLower(s)
+	s = atRe.ReplaceAllString(s, "@")
+	s = dotRe.ReplaceAllString(s, ".")
+	s = digitWordRe.ReplaceAllStringFunc(s, func(m string) string { return digitWordMap[m] })
+	s = singleRunRe.ReplaceAllStringFunc(s, func(m string) string { return strings.ReplaceAll(m, " ", "") })
+	s = atDotSpaceRe.ReplaceAllString(s, "$1")
+	var b strings.Builder
+	rs := []rune(s)
+	for i, r := range rs {
+		if isDigitSep(r) {
+			prevDigit := i > 0 && rs[i-1] >= '0' && rs[i-1] <= '9'
+			nextDigit := false
+			for j := i + 1; j < len(rs); j++ {
+				if isDigitSep(rune(rs[j])) {
+					continue
+				}
+				nextDigit = rs[j] >= '0' && rs[j] <= '9'
+				break
+			}
+			if prevDigit && nextDigit {
+				continue
+			}
+		}
+		b.WriteRune(r)
+	}
+	return strings.Join(strings.Fields(b.String()), " ")
+}
+
+var idProvince = map[string]bool{
+	"11": true, "12": true, "13": true, "14": true, "15": true, "16": true, "17": true,
+	"18": true, "19": true, "21": true, "31": true, "32": true, "33": true, "34": true,
+	"35": true, "36": true, "51": true, "52": true, "53": true, "61": true, "62": true,
+	"63": true, "64": true, "65": true, "71": true, "72": true, "73": true, "74": true,
+	"75": true, "76": true, "81": true, "82": true, "91": true, "92": true, "94": true,
+}
+
+func validNIK(d string) bool {
+	if !idProvince[d[:2]] {
+		return false
+	}
+	dd, _ := strconv.Atoi(d[6:8])
+	mm, _ := strconv.Atoi(d[8:10])
+	return ((dd >= 1 && dd <= 31) || (dd >= 41 && dd <= 71)) && mm >= 1 && mm <= 12
+}
+
+func luhnOk(d string) bool {
+	sum, dbl := 0, false
+	for i := len(d) - 1; i >= 0; i-- {
+		n := int(d[i] - '0')
+		if dbl {
+			n *= 2
+			if n > 9 {
+				n -= 9
+			}
+		}
+		sum += n
+		dbl = !dbl
+	}
+	return sum%10 == 0
+}
+
+type piiRule struct {
+	typ  string
+	re   *regexp.Regexp
+	conf float64
+	scam bool
+}
+
+var piiRules = []piiRule{
+	{"email", regexp.MustCompile(`[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}`), 0.85, false},
+	{"phone", regexp.MustCompile(`(?:\+?62|0)8\d{7,11}`), 0.85, false},
+	{"phone", regexp.MustCompile(`\+\d{8,15}`), 0.8, false},
+	{"ssn", regexp.MustCompile(`\b\d{3}[- ]\d{2}[- ]\d{4}\b`), 0.7, false},
+	{"crypto_wallet", regexp.MustCompile(`\b(bc1[a-z0-9]{25,59}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|0x[a-f0-9]{40})\b`), 0.85, true},
+	{"payment_link", regexp.MustCompile(`(?i)\b(paypal\.me/\S+|(bit\.ly|tinyurl\.com|t\.co|s\.id|gg\.gg|lynk\.id|tiny\.cc|is\.gd|cutt\.ly)/\S+)`), 0.6, true},
+	{"passport", regexp.MustCompile(`\b[a-z]\d{7}\b`), 0.45, false},
+}
+
+var nikRe = regexp.MustCompile(`\d{16}`)
+var cardRe = regexp.MustCompile(`(?:\d[ \-.]*?){13,19}`)
+var bankRe = regexp.MustCompile(`\b\d{10,16}\b`)
+var nonDigitRe = regexp.MustCompile(`\D`)
+
+type piiHit struct {
+	start, end int
+	word, typ  string
+	conf       float64
+	action     string
+	detector   string
+}
+
+func scanPII(stream string, wantPII, wantScam bool, types []string, minConf float64) []piiHit {
+	take := func(ty string) bool {
+		if len(types) == 0 {
+			return true
+		}
+		for _, t := range types {
+			if t == ty {
+				return true
+			}
+		}
+		return false
+	}
+	var hits []piiHit
+	pushSpan := func(s, e int, word, typ string, conf float64, action, detector string) {
+		if conf < minConf || !take(typ) {
+			return
+		}
+		hits = append(hits, piiHit{s, e, word, typ, conf, action, detector})
+	}
+	if wantPII {
+		for _, r := range piiRules {
+			if r.scam {
+				continue
+			}
+			for _, loc := range r.re.FindAllStringIndex(stream, -1) {
+				pushSpan(loc[0], loc[1], stream[loc[0]:loc[1]], r.typ, r.conf, "block", "pii")
+			}
+		}
+		for _, loc := range nikRe.FindAllStringIndex(stream, -1) {
+			if validNIK(stream[loc[0]:loc[1]]) {
+				pushSpan(loc[0], loc[1], stream[loc[0]:loc[1]], "nik", 0.9, "block", "pii")
+			}
+		}
+		for _, loc := range cardRe.FindAllStringIndex(stream, -1) {
+			d := nonDigitRe.ReplaceAllString(stream[loc[0]:loc[1]], "")
+			if len(d) < 13 || len(d) > 19 {
+				continue
+			}
+			conf := 0.4
+			if luhnOk(d) {
+				conf = 0.95
+			}
+			pushSpan(loc[0], loc[1], d, "bank_card", conf, "block", "pii")
+		}
+		for _, loc := range nikRe.FindAllStringIndex(stream, -1) {
+			if !validNIK(stream[loc[0]:loc[1]]) {
+				pushSpan(loc[0], loc[1], stream[loc[0]:loc[1]], "nik", 0.4, "block", "pii")
+			}
+		}
+	}
+	if wantScam {
+		for _, r := range piiRules {
+			if !r.scam {
+				continue
+			}
+			for _, loc := range r.re.FindAllStringIndex(stream, -1) {
+				pushSpan(loc[0], loc[1], stream[loc[0]:loc[1]], r.typ, r.conf, "block", "scam")
+			}
+		}
+	}
+	if wantPII && (len(types) == 0 || take("bank_account")) {
+		for _, loc := range bankRe.FindAllStringIndex(stream, -1) {
+			overlap := false
+			for _, h := range hits {
+				if h.detector == "pii" && h.start < loc[1] && loc[0] < h.end {
+					overlap = true
+					break
+				}
+			}
+			if !overlap && 0.3 >= minConf {
+				hits = append(hits, piiHit{loc[0], loc[1], stream[loc[0]:loc[1]], "bank_account", 0.3, "block", "pii"})
+			}
+		}
+	}
+	for i := 0; i < len(hits); i++ {
+		for j := i + 1; j < len(hits); j++ {
+			if hits[i].start > hits[j].start || (hits[i].start == hits[j].start && hits[i].end < hits[j].end) {
+				hits[i], hits[j] = hits[j], hits[i]
+			}
+		}
+	}
+	var kept []piiHit
+	for _, h := range hits {
+		if len(kept) > 0 && kept[len(kept)-1].end >= h.end {
+			continue
+		}
+		kept = append(kept, h)
+	}
+	return kept
+}
+
 type tnode struct {
 	next map[rune]*tnode
 	out  []int
@@ -205,6 +436,9 @@ type entry struct {
 	severity int
 	via      string
 	conf     float64
+	detector string
+	typ      string
+	action   string
 }
 
 var maturityConf = map[string]float64{
@@ -228,11 +462,12 @@ type engine struct {
 var cacheMu sync.RWMutex
 var cache = map[string]*engine{}
 
-func getEngine(o Options, langs []string, region string, minSev int, minConf float64, custom []string, white map[string]bool) *engine {
+func getEngine(o Options, langs []string, region string, minSev int, minConf float64, detectors, types, custom []string, white map[string]bool) *engine {
 	var kb strings.Builder
 	kb.WriteString(dictID + "|" + strings.Join(langs, ",") + "|" + region + "|")
 	kb.WriteString(strings.Join(o.Categories, ",") + "|" + strconv.Itoa(minSev) + "|")
 	kb.WriteString(strconv.FormatFloat(minConf, 'f', 3, 64) + "|")
+	kb.WriteString(strings.Join(detectors, ",") + "|" + strings.Join(types, ",") + "|")
 	kb.WriteString(strings.Join(custom, ",") + "|")
 	for _, w := range o.Whitelist {
 		kb.WriteString(strings.ToLower(w) + ",")
@@ -256,10 +491,22 @@ func getEngine(o Options, langs []string, region string, minSev int, minConf flo
 		}
 		return false
 	}
+	wantProf, wantSens, wantScamP := false, false, false
+	for _, d := range detectors {
+		switch d {
+		case "profanity":
+			wantProf = true
+		case "sensitive":
+			wantSens = true
+		case "scam":
+			wantScamP = true
+		}
+	}
+	takeType := func(ty string) bool { return in(types, ty) }
 	var entries []entry
 	var free []bool
 	seen := map[string]bool{}
-	push := func(word, cat string, sev int, via, lang string, conf float64) {
+	push := func(word, cat string, sev int, via, lang string, conf float64, detector, typ, action string) {
 		w := strings.ToLower(word)
 		if w == "" || white[w] {
 			return
@@ -269,8 +516,8 @@ func getEngine(o Options, langs []string, region string, minSev int, minConf flo
 		if pat == "" || white[pat] || white[disp] {
 			return
 		}
-		sig := lang + "\x00" + pat
-		if seen[sig] || sev < minSev || conf < minConf {
+		sig := detector + "\x00" + lang + "\x00" + pat
+		if seen[sig] || sev < minSev || conf < minConf || !takeType(typ) {
 			return
 		}
 		seen[sig] = true
@@ -282,7 +529,7 @@ func getEngine(o Options, langs []string, region string, minSev int, minConf flo
 			}
 		}
 		free = append(free, !hasAlnum)
-		entries = append(entries, entry{word: disp, category: cat, severity: sev, via: via, conf: conf})
+		entries = append(entries, entry{word: disp, category: cat, severity: sev, via: via, conf: conf, detector: detector, typ: typ, action: action})
 	}
 	remove := map[string]bool{}
 	if rs, ok := db.Regions[region]; ok {
@@ -326,13 +573,46 @@ func getEngine(o Options, langs []string, region string, minSev int, minConf flo
 		}
 		for _, e := range spec.Words {
 			cat := catOf(e)
-			if !in(o.Categories, cat) {
-				continue
-			}
+			sev := sevOf(e)
+			conf := confOf(e, spec.Maturity)
 			if remove[strings.ToLower(e.W)+"\x00"+lang] {
 				continue
 			}
-			push(e.W, cat, sevOf(e), "word", lang, confOf(e, spec.Maturity))
+			isHate := cat == "sara" || sev >= 3
+			switch {
+			case isHate && wantSens:
+				push(e.W, cat, sev, "hate-word", lang, conf, "sensitive", "hate", "review")
+			case !isHate && wantProf:
+				if !in(o.Categories, cat) {
+					continue
+				}
+				push(e.W, cat, sev, "word", lang, conf, "profanity", "profanity", "block")
+			case isHate && wantProf && !wantSens:
+				if !in(o.Categories, cat) {
+					continue
+				}
+				push(e.W, cat, sev, "word", lang, conf, "profanity", "profanity", "block")
+			}
+		}
+	}
+	for key, items := range db.Phrases {
+		det := "sensitive"
+		if strings.HasPrefix(key, "scam_") {
+			det = "scam"
+		}
+		if !((det == "scam" && wantScamP) || (det == "sensitive" && wantSens)) {
+			continue
+		}
+		typ := strings.TrimPrefix(strings.TrimPrefix(key, "scam_"), "sensitive_")
+		for _, p := range items {
+			if len(activeLangs) > 0 && !activeLangs[strings.ToLower(p.Lang)] {
+				continue
+			}
+			conf := p.Conf
+			if conf == 0 {
+				conf = 0.5
+			}
+			push(p.T, "phrase", 2, "phrase", p.Lang, conf, det, typ, p.Action)
 		}
 	}
 	if rs, ok := db.Regions[region]; ok {
@@ -355,7 +635,7 @@ func getEngine(o Options, langs []string, region string, minSev int, minConf flo
 			if conf == 0 {
 				conf = 0.6
 			}
-			push(e.W, cat, sev, "regional", e.Lang, conf)
+			push(e.W, cat, sev, "regional", e.Lang, conf, "profanity", "profanity", "block")
 		}
 	}
 	for raw, spec := range db.Emoji {
@@ -380,10 +660,10 @@ func getEngine(o Options, langs []string, region string, minSev int, minConf flo
 		if conf == 0 {
 			conf = 0.6
 		}
-		push(EmojiKey(raw), "gesture", sev, "emoji", "", conf)
+		push(EmojiKey(raw), "gesture", sev, "emoji", "", conf, "profanity", "profanity", "block")
 	}
 	for _, w := range custom {
-		push(w, "custom", 2, "custom", "", 1.0)
+		push(w, "custom", 2, "custom", "", 1.0, "profanity", "profanity", "block")
 	}
 	root := &tnode{next: map[rune]*tnode{}}
 	maxLen := 0
@@ -425,6 +705,10 @@ func Validate(text string, o Options) Result {
 	if strings.TrimSpace(text) == "" {
 		return Result{IsValid: true}
 	}
+	detectors := o.Detectors
+	if detectors == nil {
+		detectors = []string{"profanity"}
+	}
 	langs := append([]string(nil), o.Lang...)
 	region := o.Region
 	if o.Locale != "" {
@@ -453,7 +737,7 @@ func Validate(text string, o Options) Result {
 	for _, w := range o.Whitelist {
 		white[strings.ToLower(w)] = true
 	}
-	e := getEngine(o, langs, region, minSev, o.MinConfidence, custom, white)
+	e := getEngine(o, langs, region, minSev, o.MinConfidence, detectors, o.Types, custom, white)
 	norm := []rune(Normalize(text))
 	n := len(norm)
 	alnum := make([]bool, n)
@@ -516,11 +800,36 @@ func Validate(text string, o Options) Result {
 		}
 		found = append(found, Found{Word: e.entries[h.idx].word, Category: e.entries[h.idx].category,
 			Severity: e.entries[h.idx].severity, Via: e.entries[h.idx].via,
-			Confidence: e.entries[h.idx].conf,
+			Confidence: e.entries[h.idx].conf, Detector: e.entries[h.idx].detector,
+			Type: e.entries[h.idx].typ, Action: e.entries[h.idx].action,
 			Index: strings.Index(lower, e.entries[h.idx].word)})
 	}
+	wantPII, wantScamRx := false, false
+	for _, d := range detectors {
+		if d == "pii" {
+			wantPII = true
+		}
+		if d == "scam" {
+			wantScamRx = true
+		}
+	}
+	if wantPII || wantScamRx {
+		stream := Deobfuscate(text)
+		for _, h := range scanPII(stream, wantPII, wantScamRx, o.Types, o.MinConfidence) {
+			cat := "pii"
+			if h.detector == "scam" {
+				cat = "scam"
+			}
+			if 2 > maxSev {
+				maxSev = 2
+			}
+			found = append(found, Found{Word: h.word, Category: cat, Severity: 2,
+				Via: h.detector, Confidence: h.conf, Detector: h.detector,
+				Type: h.typ, Action: h.action, Index: strings.Index(lower, h.word)})
+		}
+	}
 	// Standalone symbols (pre-leet): whole tokens only, never substrings.
-	if region != "" && len(db.Symbols) > 0 {
+	if region != "" && len(db.Symbols) > 0 && inList(o.Types, "symbol") {
 		seenTok := map[string]bool{}
 		for _, tok := range strings.FieldsFunc(lower, func(r rune) bool { return !isAlnum(r) }) {
 			spec, ok := db.Symbols[tok]
@@ -543,7 +852,8 @@ func Validate(text string, o Options) Result {
 				sev = 1
 			}
 			found = append(found, Found{Word: tok, Category: "symbol", Severity: sev,
-				Via: "symbol", Confidence: spec.Conf, Index: strings.Index(lower, tok)})
+				Via: "symbol", Confidence: spec.Conf, Detector: "culture",
+				Type: "symbol", Action: "review", Index: strings.Index(lower, tok)})
 		}
 	}
 	for i := 0; i < len(found); i++ {
@@ -553,7 +863,18 @@ func Validate(text string, o Options) Result {
 			}
 		}
 	}
-	return Result{IsValid: len(found) == 0, MaxSeverity: maxSev, Found: found}
+	blocked, review, help := false, false, false
+	for _, f := range found {
+		switch f.Action {
+		case "block":
+			blocked = true
+		case "review":
+			review = true
+		case "help":
+			help = true
+		}
+	}
+	return Result{IsValid: !blocked, NeedsReview: review, NeedsHelp: help, MaxSeverity: maxSev, Found: found}
 }
 
 // Contains is a boolean shortcut for form validators.

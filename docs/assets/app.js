@@ -72,16 +72,21 @@
   var TAB_LABEL = { js: 'JavaScript', flutter: 'Flutter', swift: 'Swift', python: 'Python', go: 'Go', cli: 'CLI' };
 
   var PRESETS = [
-    { label: 'Basic ID', text: 'kamu anjing banget', locale: '' },
-    { label: 'Leet evasion', text: 'kamu 4nj1ng', locale: '' },
-    { label: 'Separator evasion', text: 'a.n.j.i.n.g', locale: '' },
-    { label: 'Clean', text: 'halo apa kabar, selamat pagi', locale: '' },
-    { label: 'Javanese (jv)', text: 'kamu jancok', locale: 'jv' },
-    { label: 'Thumbs-up AU', text: 'good 👍', locale: 'en-AU' },
-    { label: 'Thumbs-up US', text: 'good 👍', locale: 'en-US' },
-    { label: 'Regional ID', text: 'anak yatim piatu dibantu', locale: 'id-ID' },
-    { label: 'Number 13 US', text: 'meeting room 13', locale: 'en-US' },
-    { label: 'OK sign FR', text: 'nice 👌', locale: 'fr-FR' }
+    { label: 'Basic ID', text: 'kamu anjing banget', locale: '', dets: ['profanity'] },
+    { label: 'Leet evasion', text: 'kamu 4nj1ng', locale: '', dets: ['profanity'] },
+    { label: 'Separator evasion', text: 'a.n.j.i.n.g', locale: '', dets: ['profanity'] },
+    { label: 'Clean', text: 'halo apa kabar, selamat pagi', locale: '', dets: ['profanity'] },
+    { label: 'Javanese (jv)', text: 'kamu jancok', locale: 'jv', dets: ['profanity'] },
+    { label: 'Thumbs-up AU', text: 'good 👍', locale: 'en-AU', dets: ['profanity'] },
+    { label: 'Thumbs-up US', text: 'good 👍', locale: 'en-US', dets: ['profanity'] },
+    { label: 'Regional ID', text: 'anak yatim piatu dibantu', locale: 'id-ID', dets: ['profanity'] },
+    { label: 'Number 13 US', text: 'meeting room 13', locale: 'en-US', dets: ['profanity'] },
+    { label: 'OK sign FR', text: 'nice 👌', locale: 'fr-FR', dets: ['profanity'] },
+    { label: 'Phone number', text: 'hubungi 081234567890 ya', locale: '', dets: ['pii'] },
+    { label: 'Hidden email', text: 'j o h n [at] gmail [dot] com', locale: '', dets: ['pii'] },
+    { label: 'Donation scam', text: 'transfer langsung ke rekening ini ya', locale: 'id-ID', dets: ['scam'] },
+    { label: 'Self-harm', text: 'aku mau bunuh diri', locale: '', dets: ['sensitive'] },
+    { label: 'Gambling spam', text: 'main slot gacor maxwin', locale: '', dets: ['sensitive'] }
   ];
 
   var LOCALES = ['', 'id-ID', 'en-US', 'en-AU', 'en-GB', 'jv', 'ar-SA', 'ms-MY', 'nl-NL', 'pt-BR', 'es-MX', 'fr-CA', 'zh-CN', 'en', 'id'];
@@ -145,16 +150,23 @@
       b.addEventListener('click', function () {
         input.value = p.text;
         locale.value = p.locale;
+        ['profanity', 'pii', 'scam', 'sensitive'].forEach(function (d) {
+          el('det-' + d).checked = (p.dets || ['profanity']).indexOf(d) >= 0;
+        });
         run();
         input.focus();
       });
       presets.appendChild(b);
     });
     var t = null;
+    function rerun() { clearTimeout(t); t = setTimeout(run, 150); }
     ['input', 'change'].forEach(function (ev) {
       input.addEventListener(ev, function () { clearTimeout(t); t = setTimeout(run, 200); });
-      locale.addEventListener(ev, function () { clearTimeout(t); t = setTimeout(run, 50); });
-      sev.addEventListener(ev, function () { clearTimeout(t); t = setTimeout(run, 50); });
+      locale.addEventListener(ev, rerun);
+      sev.addEventListener(ev, rerun);
+      ['profanity', 'pii', 'scam', 'sensitive'].forEach(function (d) {
+        el('det-' + d).addEventListener(ev, rerun);
+      });
     });
   }
 
@@ -164,18 +176,24 @@
     var opts = {};
     if (locale.value) opts.locale = locale.value;
     opts.minSeverity = parseInt(sev.value, 10) || 1;
+    opts.detectors = [];
+    ['profanity', 'pii', 'scam', 'sensitive'].forEach(function (d) {
+      if (el('det-' + d).checked) opts.detectors.push(d);
+    });
     var t0 = performance.now();
     var r = window.ProhibitedWord.validate(input.value, opts);
     var ms = (performance.now() - t0).toFixed(1);
+    var state = !r.isValid ? 'flagged' : (r.needsHelp ? 'help' : (r.needsReview ? 'review' : 'clean'));
+    var label = !r.isValid ? 'Flagged' : (r.needsHelp ? 'Needs help' : (r.needsReview ? 'Needs review' : 'Clean'));
     var html = '';
-    html += '<div class="status ' + (r.isValid ? 'clean' : 'flagged') + '">'
-      + (r.isValid ? 'Clean' : 'Flagged')
+    html += '<div class="status ' + state + '">'
+      + label
       + '<span class="meta">severity ' + r.maxSeverity + ' · ' + ms + ' ms</span></div>';
-    if (!r.isValid) {
+    if (r.found.length) {
       html += '<div class="chips">';
       r.found.forEach(function (f) {
         html += '<span class="chip"><b>' + escapeHtml(f.word) + '</b>'
-          + '<i>' + escapeHtml(f.category) + ' · sev ' + f.severity + ' · ' + escapeHtml(f.via) + ' · conf ' + f.confidence + '</i></span>';
+          + '<i>' + escapeHtml(f.detector) + '/' + escapeHtml(f.type) + ' · ' + escapeHtml(f.action) + ' · conf ' + f.confidence + '</i></span>';
       });
       html += '</div>';
     }

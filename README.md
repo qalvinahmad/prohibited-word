@@ -48,6 +48,25 @@ validate('meeting room 13', { locale: 'en-US' }); // standalone symbols (4/9/13/
 censor('kamu anjing');                    // 'kamu ******'
 ```
 
+## Detector layers (donation & community apps)
+
+Default is profanity-only. Opt in per layer:
+
+```js
+validate('hubungi 081234567890', { detectors: ['pii'] }); // phone/email/NIK/card/SSN/passport/bank
+validate('j o h n [at] gmail [dot] com', { detectors: ['pii'] }); // obfuscation-aware
+validate('transfer langsung ke rekening ini', { detectors: ['scam'] }); // +crypto wallets, payment links
+validate('aku mau bunuh diri', { detectors: ['sensitive'] }); // -> needsHelp (not just block)
+validate('main slot gacor', { detectors: ['sensitive'] });    // judol/gambling -> block
+// { isValid, needsReview, needsHelp, maxSeverity, found: [{detector, type, action, confidence, ...}] }
+```
+
+Actions: `block` (isValid=false), `review` (needsReview, e.g. urgency/fraud language,
+grooming, off-platform contact, cultural symbols), `help` (needsHelp — self-harm
+triggers a help response, never just a sensor). Filter granularity with
+`types: ['phone', 'self_harm']`. PII patterns use checksum validation where
+possible (Luhn for cards, province+date for Indonesian NIK).
+
 Scope for precision: `{ lang: ['id', 'en'] }` or `{ locale: 'id-ID' }`.
 Customize: `{ customWords: [...] }`, `{ whitelist: ['alay'] }` (built-in lists are aggressive by design).
 

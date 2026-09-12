@@ -52,6 +52,145 @@ String displayForm(String word) {
   return String.fromCharCodes(runes.sublist(i, j));
 }
 
+const _digitWords = {'nol': '0', 'kosong': '0', 'satu': '1', 'dua': '2', 'tiga': '3', 'empat': '4', 'lima': '5', 'enam': '6', 'tujuh': '7', 'delapan': '8', 'sembilan': '9', 'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9', 'oh': '0'};
+
+String deobfuscate(String? text) {
+  var s = (text ?? '').toLowerCase();
+  s = s.replaceAll(RegExp(r'[{\[(]\s*at\s*[\])}]|\sat\s'), '@');
+  s = s.replaceAll(RegExp(r'[{\[(]\s*dots?\s*[\])}]|\sdots?\s|\btitik\b'), '.');
+  s = s.replaceAllMapped(RegExp(r'\b(nol|kosong|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|zero|one|two|three|four|five|six|seven|eight|nine|oh)\b'), (m) => _digitWords[m.group(1)]!);
+  s = s.replaceAllMapped(RegExp(r'\b[a-z0-9](?: [a-z0-9])+\b'), (m) => m.group(0)!.replaceAll(' ', ''));
+  s = s.replaceAllMapped(RegExp(r'\s*([@.])\s*'), (m) => m.group(1)!);
+  final runes = s.runes.toList();
+  final buf = StringBuffer();
+  bool isDig(int r) => r >= 48 && r <= 57;
+  bool isSep(int r) => r == 32 || r == 46 || r == 40 || r == 41 || r == 45;
+  for (var i = 0; i < runes.length; i++) {
+    final r = runes[i];
+    if (isSep(r)) {
+      var prevDig = false, nextDig = false;
+      for (var k = i - 1; k >= 0; k--) {
+        if (isSep(runes[k])) continue;
+        prevDig = isDig(runes[k]);
+        break;
+      }
+      for (var k = i + 1; k < runes.length; k++) {
+        if (isSep(runes[k])) continue;
+        nextDig = isDig(runes[k]);
+        break;
+      }
+      if (prevDig && nextDig) continue;
+    }
+    buf.writeCharCode(r);
+  }
+  return buf.toString().replaceAll(RegExp(r'\s+'), ' ').trim();
+}
+
+const _idProvince = {'11', '12', '13', '14', '15', '16', '17', '18', '19', '21', '31', '32', '33', '34', '35', '36', '51', '52', '53', '61', '62', '63', '64', '65', '71', '72', '73', '74', '75', '76', '81', '82', '91', '92', '94'};
+
+bool _validNIK(String d) {
+  if (!_idProvince.contains(d.substring(0, 2))) return false;
+  final dd = int.tryParse(d.substring(6, 8)) ?? 0;
+  final mm = int.tryParse(d.substring(8, 10)) ?? 0;
+  return ((dd >= 1 && dd <= 31) || (dd >= 41 && dd <= 71)) && mm >= 1 && mm <= 12;
+}
+
+bool _luhnOk(String d) {
+  var sum = 0, dbl = false;
+  for (var i = d.length - 1; i >= 0; i--) {
+    var n = d.codeUnitAt(i) - 48;
+    if (dbl) {
+      n *= 2;
+      if (n > 9) n -= 9;
+    }
+    sum += n;
+    dbl = !dbl;
+  }
+  return sum % 10 == 0;
+}
+
+class _PiiRule {
+  final String type;
+  final RegExp re;
+  final double conf;
+  final bool scam;
+  const _PiiRule(this.type, this.re, this.conf, this.scam);
+}
+
+final _piiRules = [
+  _PiiRule('email', RegExp(r'[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}'), 0.85, false),
+  _PiiRule('phone', RegExp(r'(?:\+?62|0)8\d{7,11}'), 0.85, false),
+  _PiiRule('phone', RegExp(r'\+\d{8,15}'), 0.8, false),
+  _PiiRule('ssn', RegExp(r'\b\d{3}[- ]\d{2}[- ]\d{4}\b'), 0.7, false),
+  _PiiRule('crypto_wallet', RegExp(r'\b(bc1[a-z0-9]{25,59}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|0x[a-f0-9]{40})\b'), 0.85, true),
+  _PiiRule('payment_link', RegExp(r'\b(paypal\.me/\S+|(bit\.ly|tinyurl\.com|t\.co|s\.id|gg\.gg|lynk\.id|tiny\.cc|is\.gd|cutt\.ly)/\S+)'), 0.6, true),
+  _PiiRule('passport', RegExp(r'\b[a-z]\d{7}\b'), 0.45, false),
+];
+
+class _PiiHit {
+  final int start, end;
+  final String word, type, action, detector;
+  final double conf;
+  _PiiHit(this.start, this.end, this.word, this.type, this.conf, this.action, this.detector);
+}
+
+List<_PiiHit> _scanPII(String stream, bool wantPII, bool wantScam, List<String>? types, double minConf) {
+  bool take(String ty) => types == null || types.contains(ty);
+  final hits = <_PiiHit>[];
+  void pushSpan(int s, int e, String w, String ty, double conf, String action, String det) {
+    if (conf < minConf || !take(ty)) return;
+    hits.add(_PiiHit(s, e, w, ty, conf, action, det));
+  }
+
+  if (wantPII) {
+    for (final r in _piiRules.where((r) => !r.scam)) {
+      for (final m in r.re.allMatches(stream)) {
+        pushSpan(m.start, m.end, m.group(0)!, r.type, r.conf, 'block', 'pii');
+      }
+    }
+    for (final m in RegExp(r'\d{16}').allMatches(stream)) {
+      if (_validNIK(m.group(0)!)) pushSpan(m.start, m.end, m.group(0)!, 'nik', 0.9, 'block', 'pii');
+    }
+    for (final m in RegExp(r'(?:\d[ \-.]*?){13,19}').allMatches(stream)) {
+      final d = m.group(0)!.replaceAll(RegExp(r'\D'), '');
+      if (d.length < 13 || d.length > 19) continue;
+      pushSpan(m.start, m.end, d, 'bank_card', _luhnOk(d) ? 0.95 : 0.4, 'block', 'pii');
+    }
+    for (final m in RegExp(r'\d{16}').allMatches(stream)) {
+      if (!_validNIK(m.group(0)!)) pushSpan(m.start, m.end, m.group(0)!, 'nik', 0.4, 'block', 'pii');
+    }
+  }
+  if (wantScam) {
+    for (final r in _piiRules.where((r) => r.scam)) {
+      for (final m in r.re.allMatches(stream)) {
+        pushSpan(m.start, m.end, m.group(0)!, r.type, r.conf, 'block', 'scam');
+      }
+    }
+  }
+  if (wantPII && (types == null || types.contains('bank_account'))) {
+    for (final m in RegExp(r'\b\d{10,16}\b').allMatches(stream)) {
+      final overlap = hits.any((h) => h.detector == 'pii' && h.start < m.end && m.start < h.end);
+      if (!overlap && 0.3 >= minConf) {
+        hits.add(_PiiHit(m.start, m.end, m.group(0)!, 'bank_account', 0.3, 'block', 'pii'));
+      }
+    }
+  }
+  hits.sort((a, b) => a.start != b.start ? a.start - b.start : b.end - a.end);
+  final kept = <_PiiHit>[];
+  for (final h in hits) {
+    if (kept.isNotEmpty && kept.last.end >= h.end) continue;
+    kept.add(h);
+  }
+  return kept;
+}
+
+const _phraseAction = {
+  'scam_direct_transfer': 'block', 'scam_urgency': 'review',
+  'sensitive_self_harm': 'help', 'sensitive_gambling': 'block',
+  'sensitive_grooming': 'review', 'sensitive_offplatform': 'review',
+  'sensitive_spam': 'review',
+};
+
 Map<String, String> parseLocale(String? locale) {
   if (locale == null || locale.isEmpty) return {};
   final parts = locale.split(RegExp(r'[-_]'));
@@ -77,10 +216,13 @@ class _Engine {
   final List<int> severities;
   final List<String> vias;
   final List<double> confs;
+  final List<String> detectors;
+  final List<String> types;
+  final List<String> actions;
   final List<bool> free;
   final _Node root = _Node();
   int maxLen = 0;
-  _Engine(this.words, this.categories, this.severities, this.vias, this.confs, List<String> patterns, this.free) {
+  _Engine(this.words, this.categories, this.severities, this.vias, this.confs, this.detectors, this.types, this.actions, List<String> patterns, this.free) {
     for (var i = 0; i < patterns.length; i++) {
       final p = patterns[i].split('');
       if (p.length > maxLen) maxLen = p.length;
@@ -146,32 +288,41 @@ double _confOfMaturity(String m) => kMaturityConf[m] ?? 0.5;
 
 final _cache = <String, _Engine>{};
 
-_Engine _getEngine(List<String> langs, String region, List<String>? categories, int minSeverity, double minConfidence, List<String> customWords, Set<String> whitelist) {
-  final key = '${_dbLangs().length}|${langs.join(',')}|$region|${categories?.join(',')}|$minSeverity|$minConfidence|${customWords.join(',')}|${whitelist.join(',')}';
+_Engine _getEngine(List<String> langs, String region, List<String>? categories, int minSeverity, double minConfidence, List<String> detectors, List<String>? types, List<String> customWords, Set<String> whitelist) {
+  final key = '${_dbLangs().length}|${langs.join(',')}|$region|${categories?.join(',')}|$minSeverity|$minConfidence|${detectors.join(',')}|${types?.join(',')}|${customWords.join(',')}|${whitelist.join(',')}';
   final hit = _cache[key];
   if (hit != null) return hit;
+  final wantProf = detectors.contains('profanity');
+  final wantSens = detectors.contains('sensitive');
+  bool takeType(String ty) => types == null || types.contains(ty);
   final words = <String>[];
   final cats = <String>[];
   final sevs = <int>[];
   final vias = <String>[];
   final confs = <double>[];
+  final dets = <String>[];
+  final typs = <String>[];
+  final acts = <String>[];
   final pats = <String>[];
   final free = <bool>[];
   final seen = <String>{};
-  void push(String word, String cat, int sev, String via, String? lang, double conf) {
+  void push(String word, String cat, int sev, String via, String? lang, double conf, String det, String typ, String act) {
     final w = word.toLowerCase();
     if (w.isEmpty || whitelist.contains(w)) return;
     final pat = entryPattern(w);
     final disp = displayForm(w);
     if (pat.isEmpty || whitelist.contains(pat) || whitelist.contains(disp)) return;
-    final sig = '${lang ?? ''}\x00$pat';
-    if (!seen.add(sig) || sev < minSeverity || conf < minConfidence) return;
+    final sig = '$det\x00${lang ?? ''}\x00$pat';
+    if (!seen.add(sig) || sev < minSeverity || conf < minConfidence || !takeType(typ)) return;
     free.add(!_alnum.hasMatch(pat));
     words.add(disp);
     cats.add(cat);
     sevs.add(sev);
     vias.add(via);
     confs.add(conf);
+    dets.add(det);
+    typs.add(typ);
+    acts.add(act);
     pats.add(pat);
   }
 
@@ -198,20 +349,58 @@ _Engine _getEngine(List<String> langs, String region, List<String>? categories, 
     for (final w in _dbLangWords(l)) {
       if (_remoteDb == null && removes.contains('$l\x00$w')) continue;
       final c = _dbCategory(l, w);
-      if (categories != null && !categories.contains(c)) continue;
-      push(w, c, _dbSeverity(l, w), 'word', l, _confOfMaturity(_dbMaturity(l)));
+      final sev = _dbSeverity(l, w);
+      final conf = _confOfMaturity(_dbMaturity(l));
+      final isHate = c == 'sara' || sev >= 3;
+      if (isHate && wantSens) {
+        push(w, c, sev, 'hate-word', l, conf, 'sensitive', 'hate', 'review');
+      } else if (!isHate && wantProf) {
+        if (categories != null && !categories.contains(c)) continue;
+        push(w, c, sev, 'word', l, conf, 'profanity', 'profanity', 'block');
+      } else if (isHate && wantProf && !wantSens) {
+        if (categories != null && !categories.contains(c)) continue;
+        push(w, c, sev, 'word', l, conf, 'profanity', 'profanity', 'block');
+      }
     }
   }
+  void pushPhrases(String key, List<Map<String, Object>> items) {
+    final det = key.startsWith('scam_') ? 'scam' : 'sensitive';
+    if (!detectors.contains(det)) return;
+    final typ = key.split('_').sublist(1).join('_');
+    final act = _phraseAction[key] ?? 'review';
+    for (final p in items) {
+      final pl = (p['lang'] as String?) ?? '';
+      if (activeLangs.isNotEmpty && !activeLangs.contains(pl)) continue;
+      push((p['t'] as String?) ?? '', 'phrase', 2, 'phrase', pl, ((p['conf'] as num?) ?? 0.5).toDouble(), det, typ, act);
+    }
+  }
+
+  if (_remoteDb != null) {
+    ((_remoteDb!['phrases'] as Map?) ?? {}).forEach((key, items) {
+      final det = (key as String).startsWith('scam_') ? 'scam' : 'sensitive';
+      if (!detectors.contains(det)) return;
+      final typ = (key as String).split('_').sublist(1).join('_');
+      for (final p in (items as List)) {
+        final m = p as Map;
+        final pl = (m['lang'] as String?) ?? '';
+        if (activeLangs.isNotEmpty && !activeLangs.contains(pl)) continue;
+        push((m['t'] as String?) ?? '', 'phrase', 2, 'phrase', pl,
+            ((m['conf'] as num?) ?? 0.5).toDouble(), det, typ, (m['action'] as String?) ?? 'review');
+      }
+    });
+  } else {
+    kPhrases.forEach(pushPhrases);
+  }
   for (final e in kEmojiUniversal) {
-    push(e, 'gesture', 2, 'emoji', null, kEmojiConf[e] ?? 0.6);
+    push(e, 'gesture', 2, 'emoji', null, kEmojiConf[e] ?? 0.6, 'profanity', 'profanity', 'block');
   }
   kEmojiRegional.forEach((e, regs) {
-    if (region.isNotEmpty && regs.contains(region)) push(e, 'gesture', 2, 'emoji', null, kEmojiConf[e] ?? 0.6);
+    if (region.isNotEmpty && regs.contains(region)) push(e, 'gesture', 2, 'emoji', null, kEmojiConf[e] ?? 0.6, 'profanity', 'profanity', 'block');
   });
   for (final w in customWords) {
-    push(w, 'custom', 2, 'custom', null, 1.0);
+    push(w, 'custom', 2, 'custom', null, 1.0, 'profanity', 'profanity', 'block');
   }
-  final eng = _Engine(words, cats, sevs, vias, confs, pats, free);
+  final eng = _Engine(words, cats, sevs, vias, confs, dets, typs, acts, pats, free);
   if (_cache.length > 32) _cache.remove(_cache.keys.first);
   _cache[key] = eng;
   return eng;
@@ -223,20 +412,26 @@ class Found {
   final int severity;
   final String via;
   final double confidence;
+  final String detector;
+  final String type;
+  final String action;
   final int index;
-  Found(this.word, this.category, this.severity, this.via, this.confidence, this.index);
+  Found(this.word, this.category, this.severity, this.via, this.confidence, this.detector, this.type, this.action, this.index);
 }
 
 class ValidationResult {
   final bool isValid;
+  final bool needsReview;
+  final bool needsHelp;
   final int maxSeverity;
   final List<Found> found;
-  ValidationResult(this.isValid, this.maxSeverity, this.found);
+  ValidationResult(this.isValid, this.needsReview, this.needsHelp, this.maxSeverity, this.found);
 }
 
-ValidationResult validate(String? text, {List<String>? categories, List<String>? lang, String? locale, String? region, int minSeverity = 1, double minConfidence = 0, List<String> customWords = const [], List<String> whitelist = const []}) {
+ValidationResult validate(String? text, {List<String>? categories, List<String>? lang, String? locale, String? region, int minSeverity = 1, double minConfidence = 0, List<String>? detectors, List<String>? types, List<String> customWords = const [], List<String> whitelist = const []}) {
   final original = text ?? '';
-  if (original.trim().isEmpty) return ValidationResult(true, 0, []);
+  if (original.trim().isEmpty) return ValidationResult(true, false, false, 0, []);
+  final dets = detectors ?? ['profanity'];
   final loc = parseLocale(locale);
   final fullLoc = (locale ?? '').toLowerCase().replaceAll('_', '-');
   final langs = lang?.map((l) => l.toLowerCase()).toList() ??
@@ -245,7 +440,7 @@ ValidationResult validate(String? text, {List<String>? categories, List<String>?
           : (loc['lang'] != null ? [loc['lang']!.toLowerCase()] : <String>[]));
   final reg = region ?? loc['region'] ?? '';
   final white = whitelist.map((w) => w.toLowerCase()).toSet();
-  final eng = _getEngine(langs, reg, categories, minSeverity, minConfidence, customWords.map((w) => w.toLowerCase()).toList(), white);
+  final eng = _getEngine(langs, reg, categories, minSeverity, minConfidence, dets, types, customWords.map((w) => w.toLowerCase()).toList(), white);
   final runes = normalize(original).split('');
   final alnum = runes.map((c) => _alnum.hasMatch(c)).toList();
   final free = eng.free;
@@ -283,8 +478,14 @@ ValidationResult validate(String? text, {List<String>? categories, List<String>?
     kept.add(h);
   }
   final lo = original.toLowerCase();
-  final found = kept.map((h) => Found(eng.words[h.idx], eng.categories[h.idx], eng.severities[h.idx], eng.vias[h.idx], eng.confs[h.idx], lo.indexOf(eng.words[h.idx]))).toList();
-  if (reg.isNotEmpty && kSymbols.isNotEmpty) {
+  final found = kept.map((h) => Found(eng.words[h.idx], eng.categories[h.idx], eng.severities[h.idx], eng.vias[h.idx], eng.confs[h.idx], eng.detectors[h.idx], eng.types[h.idx], eng.actions[h.idx], lo.indexOf(eng.words[h.idx]))).toList();
+  if (dets.contains('pii') || dets.contains('scam')) {
+    final stream = deobfuscate(original);
+    for (final h in _scanPII(stream, dets.contains('pii'), dets.contains('scam'), types, minConfidence)) {
+      found.add(Found(h.word, h.detector == 'scam' ? 'scam' : 'pii', 2, h.detector, h.conf, h.detector, h.type, h.action, lo.indexOf(h.word)));
+    }
+  }
+  if (reg.isNotEmpty && kSymbols.isNotEmpty && (types == null || types.contains('symbol'))) {
     final seenTok = <String>{};
     for (final tok in lo.split(RegExp(r'[^\p{L}\p{N}]', unicode: true)).where((t) => t.isNotEmpty)) {
       final spec = kSymbols[tok];
@@ -292,16 +493,17 @@ ValidationResult validate(String? text, {List<String>? categories, List<String>?
       if (!(spec['regions'] as List).contains(reg)) continue;
       final conf = (spec['conf'] as num).toDouble();
       if (conf < minConfidence) continue;
-      found.add(Found(tok, 'symbol', (spec['severity'] as num).toInt(), 'symbol', conf, lo.indexOf(tok)));
+      found.add(Found(tok, 'symbol', (spec['severity'] as num).toInt(), 'symbol', conf, 'culture', 'symbol', 'review', lo.indexOf(tok)));
     }
   }
   found.sort((a, b) => a.index.compareTo(b.index));
   final maxSev = found.map((f) => f.severity).fold(0, (a, b) => a > b ? a : b);
-  return ValidationResult(found.isEmpty, maxSev, found);
+  final blocked = found.any((f) => f.action == 'block');
+  return ValidationResult(!blocked, found.any((f) => f.action == 'review'), found.any((f) => f.action == 'help'), maxSev, found);
 }
 
-bool containsProhibited(String? text, {List<String>? categories, List<String>? lang, String? locale, String? region, int minSeverity = 1, double minConfidence = 0, List<String> customWords = const [], List<String> whitelist = const []}) =>
-    !validate(text, categories: categories, lang: lang, locale: locale, region: region, minSeverity: minSeverity, minConfidence: minConfidence, customWords: customWords, whitelist: whitelist).isValid;
+bool containsProhibited(String? text, {List<String>? categories, List<String>? lang, String? locale, String? region, int minSeverity = 1, double minConfidence = 0, List<String>? detectors, List<String>? types, List<String> customWords = const [], List<String> whitelist = const []}) =>
+    !validate(text, categories: categories, lang: lang, locale: locale, region: region, minSeverity: minSeverity, minConfidence: minConfidence, detectors: detectors, types: types, customWords: customWords, whitelist: whitelist).isValid;
 
 // Remote update (offline-first; panggil eksplisit bila perlu).
 Future<Map<String, dynamic>> fetchDataset(String url) async {

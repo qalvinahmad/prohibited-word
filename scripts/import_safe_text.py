@@ -24,6 +24,7 @@ from v3_data import (  # noqa: E402
     CURATED_CATEGORIES,
 )
 from v4_data import REGIONS_EXTRA, EMOJI_EXTRA, SYMBOLS, MATURITY_CONF  # noqa: E402
+from v5_data import PHRASES, ACTIONS, SRC as V5_SRC  # noqa: E402
 
 TOKEN_RE = re.compile(r"'((?:[^'\\]|\\.)*)'")
 EMOJI_STRIP_RE = re.compile("[\uFE0F\U0001F3FB-\U0001F3FF]")
@@ -149,8 +150,29 @@ def main():
             continue
         symbols[token] = spec
 
+    phrases = {}
+    for key, items in PHRASES.items():
+        if key not in ACTIONS:
+            print(f"WARN phrase key tanpa action, dibuang: {key}")
+            continue
+        det, act = ACTIONS[key]
+        clean = []
+        seen_ph = set()
+        for t, lang, conf in items:
+            t = str(t).strip()
+            if not t or lang not in langs or not (0 < conf <= 1):
+                print(f"WARN phrase tak valid, dibuang: {key}:{lang}:{t!r}")
+                continue
+            sig = (t.casefold(), lang)
+            if sig in seen_ph:
+                continue
+            seen_ph.add(sig)
+            clean.append({"t": t, "lang": lang, "conf": conf, "src": V5_SRC,
+                          "detector": det, "type": key.split("_", 1)[1], "action": act})
+        phrases[key] = clean
+
     full = {
-        "version": 4,
+        "version": 5,
         "meta": {
             "source": "safe_text (MIT (c) 2024 Ronit Rameja) + v3_data.py + v4_data.py",
             "released": date.today().isoformat(),
@@ -160,18 +182,20 @@ def main():
         "regions": regions,
         "emoji": emoji,
         "symbols": symbols,
+        "phrases": phrases,
     }
     CORE.mkdir(parents=True, exist_ok=True)
     (CORE / "words.json").write_text(json.dumps(full, ensure_ascii=False, indent=None), encoding="utf-8")
 
     lite_langs = {"id", "en-us"}
     lite = {
-        "version": 4,
+        "version": 5,
         "meta": full["meta"],
         "langs": {k: v for k, v in langs.items() if k in lite_langs},
         "regions": {},
         "emoji": {k: v for k, v in emoji.items() if "*" in v["offensiveIn"]},
         "symbols": {},
+        "phrases": {k: [p for p in v if p["lang"] in ("id", "en")] for k, v in phrases.items()},
     }
     (CORE / "words-lite.json").write_text(json.dumps(lite, ensure_ascii=False, indent=None), encoding="utf-8")
 
@@ -256,6 +280,14 @@ def main():
         lines.append(f"  '{m}': {float(c)},")
     lines.append("};")
 
+    lines.append("const kPhrases = <String, List<Map<String, Object>>>{")
+    for key in sorted(phrases):
+        lines.append(f"  '{key}': [")
+        for p in phrases[key]:
+            lines.append(f"    {{'t': '{dart_escape(p['t'])}', 'lang': '{p['lang']}', 'conf': {float(p['conf'])}}},")
+        lines.append("  ],")
+    lines.append("};")
+
     g_path = MONO / "packages" / "dart" / "lib" / "src" / "words.g.dart"
     g_path.parent.mkdir(parents=True, exist_ok=True)
     out = "\n".join(lines) + "\n"
@@ -263,7 +295,7 @@ def main():
 
     total = sum(len(v["words"]) for v in langs.values())
     drafts = sum(1 for v in langs.values() if v["maturity"] != "curated")
-    print(f"langs: {len(langs)} (regional/starter: {drafts})  total words: {total}  severity3: {sev_applied}")
+    print(f"langs: {len(langs)} (regional/starter: {drafts})  total words: {total}  severity3: {sev_applied}  phrases: {sum(len(v) for v in phrases.values())}")
     print(
         f"full: {(CORE/'words.json').stat().st_size/1024:.0f} KB  lite: {(CORE/'words-lite.json').stat().st_size/1024:.0f} KB  g.dart: {g_path.stat().st_size/1024:.0f} KB"
     )

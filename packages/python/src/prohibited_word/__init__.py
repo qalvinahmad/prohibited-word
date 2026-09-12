@@ -28,6 +28,105 @@ DICT_ID = f"{DB.get('version', 0)}:{len(DB.get('langs', {}))}"
 _LEET = {"@": "a", "4": "a", "8": "b", "(": "c", "3": "e", "1": "i", "!": "i",
         "0": "o", "$": "s", "5": "s", "7": "t", "+": "t", "v": "u", "#": "h"}
 
+_DIGIT_WORDS = {"nol": "0", "kosong": "0", "satu": "1", "dua": "2", "tiga": "3",
+    "empat": "4", "lima": "5", "enam": "6", "tujuh": "7", "delapan": "8", "sembilan": "9",
+    "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5",
+    "six": "6", "seven": "7", "eight": "8", "nine": "9", "oh": "0"}
+
+_ID_PROVINCE = {"11","12","13","14","15","16","17","18","19","21","31","32","33","34",
+    "35","36","51","52","53","61","62","63","64","65","71","72","73","74","75","76","81","82","91","92","94"}
+
+
+def deobfuscate(text: str | None) -> str:
+    s = str(text or "").lower()
+    s = re.sub(r"[{\[(]\s*at\s*[\])}]|\sat\s(?=[a-z0-9])", "@", s)
+    s = re.sub(r"[{\[(]\s*dots?\s*[\])}]|\sdots?(?=\s|$)|\btitik\b", ".", s)
+    s = re.sub(r"\b(nol|kosong|satu|dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|zero|one|two|three|four|five|six|seven|eight|nine|oh)\b",
+               lambda m: _DIGIT_WORDS[m.group(1)], s)
+    s = re.sub(r"\b[a-z0-9](?: [a-z0-9])+\b", lambda m: m.group(0).replace(" ", ""), s)
+    s = re.sub(r"\s*([@.])\s*", r"\1", s)
+    s = re.sub(r"(?<=\d)[\s.()\-]+(?=\d)", "", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _valid_nik(d: str) -> bool:
+    if d[:2] not in _ID_PROVINCE:
+        return False
+    try:
+        dd, mm = int(d[6:8]), int(d[8:10])
+    except ValueError:
+        return False
+    return ((1 <= dd <= 31) or (41 <= dd <= 71)) and 1 <= mm <= 12
+
+
+def _luhn_ok(d: str) -> bool:
+    total, dbl = 0, False
+    for ch in reversed(d):
+        n = ord(ch) - 48
+        if dbl:
+            n *= 2
+            if n > 9:
+                n -= 9
+        total += n
+        dbl = not dbl
+    return total % 10 == 0
+
+
+_PII_RES = [
+    ("email", re.compile(r"[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}"), 0.85, False),
+    ("phone", re.compile(r"(?:\+?62|0)8\d{7,11}"), 0.85, False),
+    ("phone", re.compile(r"\+\d{8,15}"), 0.8, False),
+    ("ssn", re.compile(r"\b\d{3}[- ]\d{2}[- ]\d{4}\b"), 0.7, False),
+    ("crypto_wallet", re.compile(r"\b(bc1[a-z0-9]{25,59}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|0x[a-f0-9]{40})\b", re.I), 0.85, True),
+    ("payment_link", re.compile(r"\b(paypal\.me/\S+|(bit\.ly|tinyurl\.com|t\.co|s\.id|gg\.gg|lynk\.id|tiny\.cc|is\.gd|cutt\.ly)/\S+)", re.I), 0.6, True),
+    ("passport", re.compile(r"\b[a-z]\d{7}\b"), 0.45, False),
+]
+
+
+def _scan_pii(stream: str, want_pii: bool, want_scam: bool, types, min_conf: float):
+    hits = []
+
+    def push_span(start, end, word, typ, conf, action, detector):
+        if conf < min_conf or (types and typ not in types):
+            return
+        hits.append({"start": start, "end": end, "word": word, "type": typ,
+                     "conf": conf, "action": action, "detector": detector})
+
+    if want_pii:
+        for typ, rx, conf, _ in [r for r in _PII_RES if not r[3]]:
+            for m in rx.finditer(stream):
+                push_span(m.start(), m.end(), m.group(0), typ, conf, "block", "pii")
+        for m in re.finditer(r"\d{16}", stream):
+            if _valid_nik(m.group(0)):
+                push_span(m.start(), m.end(), m.group(0), "nik", 0.9, "block", "pii")
+        for m in re.finditer(r"(?:\d[ \-.]*?){13,19}", stream):
+            d = re.sub(r"\D", "", m.group(0))
+            if not 13 <= len(d) <= 19:
+                continue
+            push_span(m.start(), m.end(), d, "bank_card", 0.95 if _luhn_ok(d) else 0.4, "block", "pii")
+        for m in re.finditer(r"\d{16}", stream):
+            if not _valid_nik(m.group(0)):
+                push_span(m.start(), m.end(), m.group(0), "nik", 0.4, "block", "pii")
+    if want_scam:
+        for typ, rx, conf, _ in [r for r in _PII_RES if r[3]]:
+            for m in rx.finditer(stream):
+                push_span(m.start(), m.end(), m.group(0), typ, conf, "block", "scam")
+    if want_pii and (not types or "bank_account" in types):
+        for m in re.finditer(r"\b\d{10,16}\b", stream):
+            s, e = m.start(), m.end()
+            if any(h["detector"] == "pii" and h["start"] < e and s < h["end"] for h in hits):
+                continue
+            if 0.3 >= min_conf:
+                hits.append({"start": s, "end": e, "word": m.group(0), "type": "bank_account",
+                             "conf": 0.3, "action": "block", "detector": "pii"})
+    hits.sort(key=lambda h: (h["start"], -h["end"]))
+    kept = []
+    for h in hits:
+        if kept and kept[-1]["end"] >= h["end"]:
+            continue
+        kept.append(h)
+    return kept
+
 _MATURITY_CONF = {"curated": 0.7, "regional": 0.6, "starter": 0.4, "verified": 0.95}
 
 
@@ -116,16 +215,22 @@ def _scan(root, runes: list[str], alnum: list[bool], free: list[bool], hits: lis
 _CACHE: dict = {}
 
 
-def _engine(langs, region, categories, min_sev, min_conf, custom, white):
-    key = (DICT_ID, tuple(langs), region, tuple(categories or ()), min_sev, min_conf, tuple(custom), tuple(sorted(white)))
+def _engine(langs, region, categories, min_sev, min_conf, detectors, types, custom, white):
+    key = (DICT_ID, tuple(langs), region, tuple(categories or ()), min_sev, min_conf,
+           tuple(detectors or ()), tuple(types or ()), tuple(custom), tuple(sorted(white)))
     eng = _CACHE.get(key)
     if eng is not None:
         return eng
-    entries: list[tuple[str, str, int, str, float]] = []
+    want_prof = "profanity" in detectors
+    want_sens = "sensitive" in detectors
+    want_scam_p = "scam" in detectors
+    take_type = lambda ty: not types or ty in types
+    entries: list[tuple[str, str, int, str, float, str, str, str]] = []
     free: list[bool] = []
     seen: set[str] = set()
 
-    def push(word: str, cat: str, sev: int, via: str, lang: str | None, conf: float):
+    def push(word: str, cat: str, sev: int, via: str, lang: str | None, conf: float,
+             detector: str, typ: str, action: str):
         w = str(word).lower()
         if not w or w in white:
             return
@@ -133,12 +238,12 @@ def _engine(langs, region, categories, min_sev, min_conf, custom, white):
         disp = display_form(w)
         if not pat or pat in white or disp in white:
             return
-        sig = f"{lang or ''}\0{pat}"
-        if sig in seen or sev < min_sev or conf < min_conf:
+        sig = f"{detector}\0{lang or ''}\0{pat}"
+        if sig in seen or sev < min_sev or conf < min_conf or not take_type(typ):
             return
         seen.add(sig)
         free.append(not any(c.isalnum() for c in pat))
-        entries.append((disp, cat, sev, via, conf))
+        entries.append((disp, cat, sev, via, conf, detector, typ, action))
 
     remove = set()
     reg = (DB.get("regions") or {}).get(region or "", {})
@@ -162,12 +267,32 @@ def _engine(langs, region, categories, min_sev, min_conf, custom, white):
                 continue
         for e in spec.get("words", []):
             cat = e.get("c", "profanity")
-            if categories and cat not in categories:
-                continue
+            sev = e.get("s", 2)
+            conf = float(e.get("conf", _conf_of_maturity(spec.get("maturity"))))
             if (str(e["w"]).lower(), lang) in remove:
                 continue
-            push(e["w"], cat, e.get("s", 2), "word", lang,
-                 float(e.get("conf", _conf_of_maturity(spec.get("maturity")))))
+            is_hate = cat == "sara" or sev >= 3
+            if is_hate and want_sens:
+                push(e["w"], cat, sev, "hate-word", lang, conf, "sensitive", "hate", "review")
+            elif not is_hate and want_prof:
+                if categories and cat not in categories:
+                    continue
+                push(e["w"], cat, sev, "word", lang, conf, "profanity", "profanity", "block")
+            elif is_hate and want_prof and not want_sens:
+                if categories and cat not in categories:
+                    continue
+                push(e["w"], cat, sev, "word", lang, conf, "profanity", "profanity", "block")
+
+    for _key, _items in (DB.get("phrases") or {}).items():
+        _det = "scam" if _key.startswith("scam_") else "sensitive"
+        if _det not in detectors:
+            continue
+        for p in _items:
+            if active_langs and p["lang"] not in active_langs:
+                continue
+            _typ = _key.split("_", 1)[1]
+            push(p["t"], "phrase", 2, "phrase", p["lang"], float(p.get("conf", 0.5)),
+                 _det, _typ, p.get("action", "review"))
 
     for e in reg.get("add", []):
         if langs and e["lang"] not in langs:
@@ -175,18 +300,20 @@ def _engine(langs, region, categories, min_sev, min_conf, custom, white):
         cat = e.get("c", "profanity")
         if categories and cat not in categories:
             continue
-        push(e["w"], cat, e.get("s", 2), "regional", e["lang"], float(e.get("conf", 0.6)))
+        push(e["w"], cat, e.get("s", 2), "regional", e["lang"], float(e.get("conf", 0.6)),
+             "profanity", "profanity", "block")
 
     for raw, spec in (DB.get("emoji") or {}).items():
         off = spec.get("offensiveIn", [])
         if "*" not in off and (not region or region not in off):
             continue
-        push(emoji_key(raw), "gesture", spec.get("severity", 2), "emoji", None, float(spec.get("conf", 0.6)))
+        push(emoji_key(raw), "gesture", spec.get("severity", 2), "emoji", None,
+             float(spec.get("conf", 0.6)), "profanity", "profanity", "block")
 
     for w in custom:
-        push(w, "custom", 2, "custom", None, 1.0)
+        push(w, "custom", 2, "custom", None, 1.0, "profanity", "profanity", "block")
 
-    patterns = [(entry_pattern(w), i) for i, (w, _, _, _, _) in enumerate(entries)]
+    patterns = [(entry_pattern(w), i) for i, (w, _, _, _, _, _, _, _) in enumerate(entries)]
     eng = (entries, free, _build_trie(patterns))
     if len(_CACHE) > 32:
         _CACHE.pop(next(iter(_CACHE)))
@@ -195,11 +322,14 @@ def _engine(langs, region, categories, min_sev, min_conf, custom, white):
 
 
 def validate(text, categories=None, lang=None, locale=None, region=None,
-             min_severity: int = 1, min_confidence: float = 0,
-             custom_words=None, whitelist=None) -> dict:
+             min_severity: int = 1, min_confidence: float = 0, detectors=None,
+             types=None, custom_words=None, whitelist=None) -> dict:
     original = str(text or "")
     if not original.strip():
-        return {"is_valid": True, "max_severity": 0, "found": []}
+        return {"is_valid": True, "needs_review": False, "needs_help": False,
+                "max_severity": 0, "found": []}
+    if detectors is None:
+        detectors = ["profanity"]
     loc = parse_locale(locale)
     full_loc = str(locale).lower().replace("_", "-") if locale else ""
     if lang:
@@ -213,7 +343,8 @@ def validate(text, categories=None, lang=None, locale=None, region=None,
     region = region or loc.get("region") or ""
     white = {str(w).lower() for w in (whitelist or [])}
     custom = [str(w).lower() for w in (custom_words or [])]
-    entries, free, trie = _engine(langs, region, categories, min_severity, min_confidence, custom, white)
+    entries, free, trie = _engine(langs, region, categories, min_severity, min_confidence,
+                                  detectors, types, custom, white)
     norm = normalize(original)
     runes = list(norm)
     alnum = [c.isalnum() for c in runes]
@@ -227,9 +358,20 @@ def validate(text, categories=None, lang=None, locale=None, region=None,
         kept.append(h)
     lo = original.lower()
     found = [{"word": entries[i][0], "category": entries[i][1], "severity": entries[i][2],
-              "via": entries[i][3], "confidence": entries[i][4],
+              "via": entries[i][3], "confidence": entries[i][4], "detector": entries[i][5],
+              "type": entries[i][6], "action": entries[i][7],
               "index": lo.find(entries[i][0])} for i, _, _ in kept]
-    if region and DB.get("symbols"):
+    if ("pii" in detectors or "scam" in detectors):
+        stream = deobfuscate(original)
+        for h in _scan_pii(stream, "pii" in detectors, "scam" in detectors, types, min_confidence):
+            if h["detector"] == "scam":
+                cat = "scam"
+            else:
+                cat = "pii"
+            found.append({"word": h["word"], "category": cat, "severity": 2, "via": h["detector"],
+                          "confidence": h["conf"], "detector": h["detector"], "type": h["type"],
+                          "action": h["action"], "index": lo.find(h["word"])})
+    if region and DB.get("symbols") and (not types or "symbol" in types):
         tokens = [t for t in re.split(r"[^\w]", lo, flags=re.UNICODE) if t]
         seen_tok = set()
         for tok in tokens:
@@ -243,9 +385,14 @@ def validate(text, categories=None, lang=None, locale=None, region=None,
             if conf < min_confidence:
                 continue
             found.append({"word": tok, "category": "symbol", "severity": spec.get("severity", 1),
-                          "via": "symbol", "confidence": conf, "index": lo.find(tok)})
+                          "via": "symbol", "confidence": conf, "detector": "culture",
+                          "type": "symbol", "action": "review", "index": lo.find(tok)})
     found.sort(key=lambda f: f["index"])
-    return {"is_valid": not found, "max_severity": max([f["severity"] for f in found] or [0]), "found": found}
+    blocked = any(f["action"] == "block" for f in found)
+    return {"is_valid": not blocked,
+            "needs_review": any(f["action"] == "review" for f in found),
+            "needs_help": any(f["action"] == "help" for f in found),
+            "max_severity": max([f["severity"] for f in found] or [0]), "found": found}
 
 
 def contains(text, **opts) -> bool:

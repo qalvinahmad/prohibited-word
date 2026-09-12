@@ -28,14 +28,38 @@ describe('prohibited-word', () => {
     assert.equal(validate('kamu anjing').maxSeverity, 2);
   });
   it('symbol-standalone', () => {
-    assert.equal(contains('floor 13', { locale: 'en-US' }), true);
+    const r = validate('floor 13', { locale: 'en-US' });
+    assert.equal(r.isValid, true); // cultural advisory -> review, not block
+    assert.equal(r.needsReview, true);
+    assert.equal(r.found[0].type, 'symbol');
     assert.equal(contains('room 136', { locale: 'en-US' }), false);
-    assert.equal(contains('nomor 4', { locale: 'zh-CN' }), true);
+    assert.equal(validate('nomor 4', { locale: 'zh-CN' }).needsReview, true);
     assert.equal(contains('nomor 4', { locale: 'id-ID' }), false);
   });
   it('confidence', () => {
     assert.equal(validate('kamu anjing', { minConfidence: 0.8 }).isValid, true);
     assert.equal(validate('kamu anjing').found[0].confidence, 0.7);
     assert.equal(validate('good 👍', { locale: 'en-AU' }).found[0].confidence, 0.6);
+  });
+  it('pii-opt-in', () => {
+    assert.equal(contains('hubungi 081234567890', { detectors: ['pii'] }), true);
+    assert.equal(contains('hubungi 081234567890'), false); // default profanity saja
+    const r = validate('email saya j o h n [at] gmail [dot] com', { detectors: ['pii'] });
+    assert.equal(r.found[0].type, 'email');
+    assert.equal(validate('NIK 3174051209900001', { detectors: ['pii'] }).found[0].type, 'nik');
+    assert.equal(validate('kartu 4532015112830366', { detectors: ['pii'] }).found[0].type, 'bank_card');
+  });
+  it('scam-layer', () => {
+    const r = validate('transfer langsung ke rekening ini ya', { detectors: ['scam'] });
+    assert.equal(r.isValid, false);
+    assert.equal(r.found[0].type, 'direct_transfer');
+    assert.equal(contains('donasi ke bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4', { detectors: ['scam'] }), true);
+  });
+  it('sensitive-layer', () => {
+    const r = validate('aku mau bunuh diri', { detectors: ['sensitive'] });
+    assert.equal(r.needsHelp, true);
+    assert.equal(r.found[0].action, 'help');
+    assert.equal(contains('main slot gacor', { detectors: ['sensitive'] }), true);
+    assert.equal(validate('chat wa aja ya', { detectors: ['sensitive'] }).needsReview, true);
   });
 });

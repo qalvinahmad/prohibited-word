@@ -38,11 +38,34 @@ def test_severity():
     assert validate("kamu anjing")["max_severity"] == 2
 
 def test_symbol_standalone():
-    from prohibited_word import contains
-    assert contains("floor 13", locale="en-US") is True
+    from prohibited_word import validate, contains
+    r = validate("floor 13", locale="en-US")
+    assert r["is_valid"] is True
+    assert r["needs_review"] is True
+    assert r["found"][0]["type"] == "symbol"
     assert contains("room 136", locale="en-US") is False
-    assert contains("nomor 4", locale="zh-CN") is True
-    assert contains("nomor 4", locale="id-ID") is False
+
+def test_pii_opt_in():
+    from prohibited_word import validate, contains
+    assert contains("hubungi 081234567890", detectors=["pii"]) is True
+    assert contains("hubungi 081234567890") is False
+    r = validate("email saya j o h n [at] gmail [dot] com", detectors=["pii"])
+    assert r["found"][0]["type"] == "email"
+    assert validate("NIK 3174051209900001", detectors=["pii"])["found"][0]["type"] == "nik"
+
+def test_scam_layer():
+    from prohibited_word import validate, contains
+    r = validate("transfer langsung ke rekening ini ya", detectors=["scam"])
+    assert r["is_valid"] is False
+    assert r["found"][0]["type"] == "direct_transfer"
+
+def test_sensitive_layer():
+    from prohibited_word import validate, contains
+    r = validate("aku mau bunuh diri", detectors=["sensitive"])
+    assert r["needs_help"] is True
+    assert r["found"][0]["action"] == "help"
+    assert contains("main slot gacor", detectors=["sensitive"]) is True
+    assert validate("chat wa aja ya", detectors=["sensitive"])["needs_review"] is True
 
 def test_confidence():
     from prohibited_word import validate

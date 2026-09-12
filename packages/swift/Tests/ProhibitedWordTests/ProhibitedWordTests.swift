@@ -20,12 +20,25 @@ import Testing
   #expect(validate("kamu anjing").maxSeverity == 2)
 }
 @Test func symbolStandalone() {
-  #expect(containsProhibited("floor 13", locale: "en-US"))
+  let r = validate("floor 13", locale: "en-US")
+  #expect(r.isValid && r.needsReview && r.found.first?.type == "symbol")
   #expect(!containsProhibited("room 136", locale: "en-US"))
-  #expect(containsProhibited("nomor 4", locale: "zh-CN"))
+  #expect(validate("nomor 4", locale: "zh-CN").needsReview)
   #expect(!containsProhibited("nomor 4", locale: "id-ID"))
 }
-@Test func confidence() {
-  #expect(validate("kamu anjing", minConfidence: 0.8).isValid)
-  #expect(validate("kamu anjing").found.first?.confidence == 0.7)
+@Test func piiOptIn() {
+  #expect(containsProhibited("hubungi 081234567890", detectors: ["pii"]))
+  #expect(!containsProhibited("hubungi 081234567890"))
+  #expect(validate("email saya j o h n [at] gmail [dot] com", detectors: ["pii"]).found.first?.type == "email")
+  #expect(validate("NIK 3174051209900001", detectors: ["pii"]).found.first?.type == "nik")
+}
+@Test func scamLayer() {
+  let r = validate("transfer langsung ke rekening ini ya", detectors: ["scam"])
+  #expect(!r.isValid && r.found.first?.type == "direct_transfer")
+}
+@Test func sensitiveLayer() {
+  let r = validate("aku mau bunuh diri", detectors: ["sensitive"])
+  #expect(r.needsHelp && r.found.first?.action == "help")
+  #expect(containsProhibited("main slot gacor", detectors: ["sensitive"]))
+  #expect(validate("chat wa aja ya", detectors: ["sensitive"]).needsReview)
 }

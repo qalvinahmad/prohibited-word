@@ -64,6 +64,26 @@ Tidak pernah throw untuk input aneh. Cache trie per kombinasi opts (maks 32).
   regional (`en-au`) membawa kata spesifik + mewarisi base.
 - Format remote = words.json v4.
 
+## v5: detector layers (pii / scam / sensitive)
+
+`opts.detectors` default `['profanity']` (kompatibel mundur).
+`opts.types` memfilter tipe di dalam layer aktif.
+
+| Detector | Sumber | Action |
+|---|---|---|
+| `profanity` | word engine (semua bahasa) | `block` |
+| `pii` | regex: phone (ID+intl), email, NIK+wilayah, kartu+Luhn, SSN, paspor, rekening | `block` |
+| `scam` | crypto wallet, payment/short link (regex) + direct_transfer/urgency (frasa) | `block`, kecuali urgency `review` |
+| `sensitive` | self_harm→`help`; gambling→`block`; hate(=sara/sev3)→`review`; grooming/offplatform/spam→`review` | lihat kolom |
+
+- `deobfuscate()`: `[at]`→@, `[dot]`/`titik`→`.`, kata-angka (ID+EN)→digit,
+  token 1-huruf digabung, separator antar-digit dibuang. Stream ini HANYA
+  untuk regex PII/scam (tidak memengaruhi profanity normalize).
+- Simbol standalone tetap di luar detectors (data `culture`, action `review`).
+- Hasil: `isValid` (tanpa block), `needsReview`, `needsHelp`,
+  `found[].{detector,type,action,confidence}`.
+- `censor()` hanya menyensor hit `block`.
+
 ## Remote update (offline-first)
 
 Dataset bawaan selalu offline. `fetchDataset(url)` + `checkForUpdates(url)` +

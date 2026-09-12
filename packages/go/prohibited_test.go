@@ -66,14 +66,15 @@ func TestSeverity(t *testing.T) {
 }
 
 func TestSymbolStandalone(t *testing.T) {
-	if !Contains("floor 13", Options{Locale: "en-US"}) {
-		t.Fatal("simbol 13 US tidak ketahuan")
+	r := Validate("floor 13", Options{Locale: "en-US"})
+	if !r.IsValid || !r.NeedsReview || r.Found[0].Type != "symbol" {
+		t.Fatal("simbol 13 US harus review, bukan block")
 	}
 	if Contains("room 136", Options{Locale: "en-US"}) {
-		t.Fatal("136 bukan token utuh, seharusnya bersih")
+		t.Fatal("136 bukan token utuh")
 	}
-	if !Contains("nomor 4", Options{Locale: "zh-CN"}) {
-		t.Fatal("simbol 4 CN tidak ketahuan")
+	if !Validate("nomor 4", Options{Locale: "zh-CN"}).NeedsReview {
+		t.Fatal("simbol 4 CN harus review")
 	}
 	if Contains("nomor 4", Options{Locale: "id-ID"}) {
 		t.Fatal("simbol 4 ID seharusnya bersih")
@@ -86,5 +87,40 @@ func TestConfidence(t *testing.T) {
 	}
 	if Validate("kamu anjing", Options{}).Found[0].Confidence != 0.7 {
 		t.Fatal("confidence anjing seharusnya 0.7 (curated)")
+	}
+}
+
+func TestPIIOptIn(t *testing.T) {
+	if !Contains("hubungi 081234567890", Options{Detectors: []string{"pii"}}) {
+		t.Fatal("telepon tidak ketahuan")
+	}
+	if Contains("hubungi 081234567890", Options{}) {
+		t.Fatal("default seharusnya profanity saja")
+	}
+	if got := Validate("email saya j o h n [at] gmail [dot] com", Options{Detectors: []string{"pii"}}); len(got.Found) == 0 || got.Found[0].Type != "email" {
+		t.Fatal("email tersamar tidak ketahuan")
+	}
+	if got := Validate("NIK 3174051209900001", Options{Detectors: []string{"pii"}}); len(got.Found) == 0 || got.Found[0].Type != "nik" {
+		t.Fatal("NIK tidak ketahuan")
+	}
+}
+
+func TestScamLayer(t *testing.T) {
+	r := Validate("transfer langsung ke rekening ini ya", Options{Detectors: []string{"scam"}})
+	if r.IsValid || r.Found[0].Type != "direct_transfer" {
+		t.Fatal("direct_transfer tidak ketahuan")
+	}
+}
+
+func TestSensitiveLayer(t *testing.T) {
+	r := Validate("aku mau bunuh diri", Options{Detectors: []string{"sensitive"}})
+	if !r.NeedsHelp || r.Found[0].Action != "help" {
+		t.Fatal("self_harm harus trigger help")
+	}
+	if !Contains("main slot gacor", Options{Detectors: []string{"sensitive"}}) {
+		t.Fatal("gambling tidak ketahuan")
+	}
+	if !Validate("chat wa aja ya", Options{Detectors: []string{"sensitive"}}).NeedsReview {
+		t.Fatal("offplatform harus review")
 	}
 }
