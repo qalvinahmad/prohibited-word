@@ -76,10 +76,11 @@ class _Engine {
   final List<String> categories;
   final List<int> severities;
   final List<String> vias;
+  final List<double> confs;
   final List<bool> free;
   final _Node root = _Node();
   int maxLen = 0;
-  _Engine(this.words, this.categories, this.severities, this.vias, List<String> patterns, this.free) {
+  _Engine(this.words, this.categories, this.severities, this.vias, this.confs, List<String> patterns, this.free) {
     for (var i = 0; i < patterns.length; i++) {
       final p = patterns[i].split('');
       if (p.length > maxLen) maxLen = p.length;
@@ -134,32 +135,43 @@ int _dbSeverity(String lang, String word) {
   return kSeverityOverride['$lang\x00$word'] ?? 2;
 }
 
+String _dbMaturity(String lang) {
+  if (_remoteDb != null) {
+    return ((_remoteDb!['langs'] as Map)[lang]?['maturity'] as String?) ?? '';
+  }
+  return kLangMaturity[lang] ?? '';
+}
+
+double _confOfMaturity(String m) => kMaturityConf[m] ?? 0.5;
+
 final _cache = <String, _Engine>{};
 
-_Engine _getEngine(List<String> langs, String region, List<String>? categories, int minSeverity, List<String> customWords, Set<String> whitelist) {
-  final key = '${_dbLangs().length}|${langs.join(',')}|$region|${categories?.join(',')}|$minSeverity|${customWords.join(',')}|${whitelist.join(',')}';
+_Engine _getEngine(List<String> langs, String region, List<String>? categories, int minSeverity, double minConfidence, List<String> customWords, Set<String> whitelist) {
+  final key = '${_dbLangs().length}|${langs.join(',')}|$region|${categories?.join(',')}|$minSeverity|$minConfidence|${customWords.join(',')}|${whitelist.join(',')}';
   final hit = _cache[key];
   if (hit != null) return hit;
   final words = <String>[];
   final cats = <String>[];
   final sevs = <int>[];
   final vias = <String>[];
+  final confs = <double>[];
   final pats = <String>[];
   final free = <bool>[];
   final seen = <String>{};
-  void push(String word, String cat, int sev, String via, String? lang) {
+  void push(String word, String cat, int sev, String via, String? lang, double conf) {
     final w = word.toLowerCase();
     if (w.isEmpty || whitelist.contains(w)) return;
     final pat = entryPattern(w);
     final disp = displayForm(w);
     if (pat.isEmpty || whitelist.contains(pat) || whitelist.contains(disp)) return;
     final sig = '${lang ?? ''}\x00$pat';
-    if (!seen.add(sig) || sev < minSeverity) return;
+    if (!seen.add(sig) || sev < minSeverity || conf < minConfidence) return;
     free.add(!_alnum.hasMatch(pat));
     words.add(disp);
     cats.add(cat);
     sevs.add(sev);
     vias.add(via);
+    confs.add(conf);
     pats.add(pat);
   }
 
@@ -187,19 +199,19 @@ _Engine _getEngine(List<String> langs, String region, List<String>? categories, 
       if (_remoteDb == null && removes.contains('$l\x00$w')) continue;
       final c = _dbCategory(l, w);
       if (categories != null && !categories.contains(c)) continue;
-      push(w, c, _dbSeverity(l, w), 'word', l);
+      push(w, c, _dbSeverity(l, w), 'word', l, _confOfMaturity(_dbMaturity(l)));
     }
   }
   for (final e in kEmojiUniversal) {
-    push(e, 'gesture', 2, 'emoji', null);
+    push(e, 'gesture', 2, 'emoji', null, kEmojiConf[e] ?? 0.6);
   }
   kEmojiRegional.forEach((e, regs) {
-    if (region.isNotEmpty && regs.contains(region)) push(e, 'gesture', 2, 'emoji', null);
+    if (region.isNotEmpty && regs.contains(region)) push(e, 'gesture', 2, 'emoji', null, kEmojiConf[e] ?? 0.6);
   });
   for (final w in customWords) {
-    push(w, 'custom', 2, 'custom', null);
+    push(w, 'custom', 2, 'custom', null, 1.0);
   }
-  final eng = _Engine(words, cats, sevs, vias, pats, free);
+  final eng = _Engine(words, cats, sevs, vias, confs, pats, free);
   if (_cache.length > 32) _cache.remove(_cache.keys.first);
   _cache[key] = eng;
   return eng;
@@ -210,8 +222,9 @@ class Found {
   final String category;
   final int severity;
   final String via;
+  final double confidence;
   final int index;
-  Found(this.word, this.category, this.severity, this.via, this.index);
+  Found(this.word, this.category, this.severity, this.via, this.confidence, this.index);
 }
 
 class ValidationResult {
@@ -221,7 +234,7 @@ class ValidationResult {
   ValidationResult(this.isValid, this.maxSeverity, this.found);
 }
 
-ValidationResult validate(String? text, {List<String>? categories, List<String>? lang, String? locale, String? region, int minSeverity = 1, List<String> customWords = const [], List<String> whitelist = const []}) {
+ValidationResult validate(String? text, {List<String>? categories, List<String>? lang, String? locale, String? region, int minSeverity = 1, double minConfidence = 0, List<String> customWords = const [], List<String> whitelist = const []}) {
   final original = text ?? '';
   if (original.trim().isEmpty) return ValidationResult(true, 0, []);
   final loc = parseLocale(locale);
@@ -232,7 +245,7 @@ ValidationResult validate(String? text, {List<String>? categories, List<String>?
           : (loc['lang'] != null ? [loc['lang']!.toLowerCase()] : <String>[]));
   final reg = region ?? loc['region'] ?? '';
   final white = whitelist.map((w) => w.toLowerCase()).toSet();
-  final eng = _getEngine(langs, reg, categories, minSeverity, customWords.map((w) => w.toLowerCase()).toList(), white);
+  final eng = _getEngine(langs, reg, categories, minSeverity, minConfidence, customWords.map((w) => w.toLowerCase()).toList(), white);
   final runes = normalize(original).split('');
   final alnum = runes.map((c) => _alnum.hasMatch(c)).toList();
   final free = eng.free;
@@ -270,14 +283,25 @@ ValidationResult validate(String? text, {List<String>? categories, List<String>?
     kept.add(h);
   }
   final lo = original.toLowerCase();
-  final found = kept.map((h) => Found(eng.words[h.idx], eng.categories[h.idx], eng.severities[h.idx], eng.vias[h.idx], lo.indexOf(eng.words[h.idx]))).toList();
+  final found = kept.map((h) => Found(eng.words[h.idx], eng.categories[h.idx], eng.severities[h.idx], eng.vias[h.idx], eng.confs[h.idx], lo.indexOf(eng.words[h.idx]))).toList();
+  if (reg.isNotEmpty && kSymbols.isNotEmpty) {
+    final seenTok = <String>{};
+    for (final tok in lo.split(RegExp(r'[^\p{L}\p{N}]', unicode: true)).where((t) => t.isNotEmpty)) {
+      final spec = kSymbols[tok];
+      if (spec == null || !seenTok.add(tok)) continue;
+      if (!(spec['regions'] as List).contains(reg)) continue;
+      final conf = (spec['conf'] as num).toDouble();
+      if (conf < minConfidence) continue;
+      found.add(Found(tok, 'symbol', (spec['severity'] as num).toInt(), 'symbol', conf, lo.indexOf(tok)));
+    }
+  }
   found.sort((a, b) => a.index.compareTo(b.index));
   final maxSev = found.map((f) => f.severity).fold(0, (a, b) => a > b ? a : b);
   return ValidationResult(found.isEmpty, maxSev, found);
 }
 
-bool containsProhibited(String? text, {List<String>? categories, List<String>? lang, String? locale, String? region, int minSeverity = 1, List<String> customWords = const [], List<String> whitelist = const []}) =>
-    !validate(text, categories: categories, lang: lang, locale: locale, region: region, minSeverity: minSeverity, customWords: customWords, whitelist: whitelist).isValid;
+bool containsProhibited(String? text, {List<String>? categories, List<String>? lang, String? locale, String? region, int minSeverity = 1, double minConfidence = 0, List<String> customWords = const [], List<String> whitelist = const []}) =>
+    !validate(text, categories: categories, lang: lang, locale: locale, region: region, minSeverity: minSeverity, minConfidence: minConfidence, customWords: customWords, whitelist: whitelist).isValid;
 
 // Remote update (offline-first; panggil eksplisit bila perlu).
 Future<Map<String, dynamic>> fetchDataset(String url) async {
@@ -296,9 +320,9 @@ Future<Map<String, dynamic>> checkForUpdates(String url) async {
   final remote = await fetchDataset(url);
   final remoteLangs = (remote['langs'] as Map).keys.length;
   return {
-    'current': {'version': 3, 'langs': kWordsByLang.length},
+    'current': {'version': 4, 'langs': kWordsByLang.length},
     'remote': {'version': remote['version'], 'langs': remoteLangs},
-    'updateAvailable': (remote['version'] as int? ?? 0) > 3,
+    'updateAvailable': (remote['version'] as int? ?? 0) > 4,
     'remoteDb': remote,
   };
 }

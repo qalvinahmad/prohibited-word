@@ -23,6 +23,7 @@ from v3_data import (  # noqa: E402
     SEVERITY_OVERRIDES,
     CURATED_CATEGORIES,
 )
+from v4_data import REGIONS_EXTRA, EMOJI_EXTRA, SYMBOLS, MATURITY_CONF  # noqa: E402
 
 TOKEN_RE = re.compile(r"'((?:[^'\\]|\\.)*)'")
 EMOJI_STRIP_RE = re.compile("[\uFE0F\U0001F3FB-\U0001F3FF]")
@@ -116,7 +117,10 @@ def main():
     langs = dict(sorted(langs.items(), key=lambda x: x[1].get("order", 999)))
 
     regions = {}
-    for code, spec in REGIONS.items():
+    for code, spec in list(REGIONS.items()) + list(REGIONS_EXTRA.items()):
+        if not spec.get("source"):
+            print(f"WARN region tanpa source, dibuang: {code}")
+            continue
         ok_remove = []
         for r in spec.get("remove", []):
             if (str(r["w"]).casefold(), r["lang"]) in base:
@@ -131,31 +135,43 @@ def main():
         }
 
     emoji = {}
-    for raw, spec in EMOJI.items():
+    for raw, spec in list(EMOJI.items()) + list(EMOJI_EXTRA.items()):
+        if "conf" not in spec or "source" not in spec:
+            print(f"WARN emoji tanpa conf/source, dibuang: {raw!r}")
+            continue
         key = EMOJI_STRIP_RE.sub("", raw)
         emoji[key] = spec
 
+    symbols = {}
+    for token, spec in SYMBOLS.items():
+        if "conf" not in spec or "source" not in spec or "regions" not in spec:
+            print(f"WARN symbol tanpa conf/source/regions, dibuang: {token!r}")
+            continue
+        symbols[token] = spec
+
     full = {
-        "version": 3,
+        "version": 4,
         "meta": {
-            "source": "safe_text (MIT (c) 2024 Ronit Rameja) + v3_data.py",
+            "source": "safe_text (MIT (c) 2024 Ronit Rameja) + v3_data.py + v4_data.py",
             "released": date.today().isoformat(),
             "langs": len(langs),
         },
         "langs": langs,
         "regions": regions,
         "emoji": emoji,
+        "symbols": symbols,
     }
     CORE.mkdir(parents=True, exist_ok=True)
     (CORE / "words.json").write_text(json.dumps(full, ensure_ascii=False, indent=None), encoding="utf-8")
 
     lite_langs = {"id", "en-us"}
     lite = {
-        "version": 3,
+        "version": 4,
         "meta": full["meta"],
         "langs": {k: v for k, v in langs.items() if k in lite_langs},
         "regions": {},
         "emoji": {k: v for k, v in emoji.items() if "*" in v["offensiveIn"]},
+        "symbols": {},
     }
     (CORE / "words-lite.json").write_text(json.dumps(lite, ensure_ascii=False, indent=None), encoding="utf-8")
 
@@ -221,6 +237,23 @@ def main():
         regs = [r for r in v["offensiveIn"] if r != "*"]
         if regs:
             lines.append(f"  '{dart_escape(k)}': <String>[{', '.join(repr(r) for r in regs)}],")
+    lines.append("};")
+
+    lines.append("const kEmojiConf = <String, double>{")
+    for k, v in emoji.items():
+        lines.append(f"  '{dart_escape(k)}': {float(v.get('conf', 0.6))},")
+    lines.append("};")
+
+    lines.append("const kSymbols = <String, Map<String, Object>>{")
+    for token in sorted(symbols):
+        v = symbols[token]
+        regs = ", ".join(repr(r) for r in v["regions"])
+        lines.append(f"  '{dart_escape(token)}': {{'regions': <String>[{regs}], 'severity': {v.get('severity', 1)}, 'conf': {float(v.get('conf', 0.5))}}},")
+    lines.append("};")
+
+    lines.append("const kMaturityConf = <String, double>{")
+    for m, c in MATURITY_CONF.items():
+        lines.append(f"  '{m}': {float(c)},")
     lines.append("};")
 
     g_path = MONO / "packages" / "dart" / "lib" / "src" / "words.g.dart"

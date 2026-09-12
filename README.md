@@ -13,7 +13,8 @@
 [![Live Demo](https://img.shields.io/badge/demo-GitHub_Pages-blue?logo=github)](https://qalvinahmad.github.io/prohibited-word/)
 
 Form profanity validation — **130 languages & locales, ~56,000 words/phrases**,
-locale + region + emoji + severity layers. Offline-first, one monorepo,
+locale + region + emoji + symbols + severity + **confidence** layers.
+Offline-first, one monorepo,
 seven registries. **[Try the live demo](https://qalvinahmad.github.io/prohibited-word/)**.
 
 | Package | Registry | Install |
@@ -32,7 +33,7 @@ import { validate, contains, censor } from 'prohibited-word';
 
 validate('kamu anjing');
 // { isValid: false, maxSeverity: 2,
-//   found: [{ word: 'anjing', category: 'kasar', severity: 2, via: 'word', index: 5 }] }
+//   found: [{ word: 'anjing', category: 'kasar', severity: 2, via: 'word', confidence: 0.7, index: 5 }] }
 
 contains('kamu 4nj1ng');                  // true  (leet-speak)
 contains('a.n.j.i.n.g');                  // true  (separator evasion)
@@ -42,6 +43,8 @@ validate('kamu jancok', { locale: 'jv' });// Javanese regional support
 validate('good 👍', { locale: 'en-AU' }); // flagged — clean for en-US (region-aware emoji)
 validate('anak yatim piatu', { locale: 'id-ID' }); // clean (regional override)
 validate('kamu anjing', { minSeverity: 3 });       // severity threshold
+validate('kamu anjing', { minConfidence: 0.8 });   // confidence threshold (0..1 per hit)
+validate('meeting room 13', { locale: 'en-US' }); // standalone symbols (4/9/13/17/666) by region
 censor('kamu anjing');                    // 'kamu ******'
 ```
 
@@ -210,11 +213,14 @@ To avoid overclaiming and ensure reliability, dataset coverage is categorized in
 
 ## How it works
 
-Single source of truth: `packages/core/words.json` (v3 schema) + `words-lite.json`
+Single source of truth: `packages/core/words.json` (v4 schema) + `words-lite.json`
 (id+en-us). Every language implements the same contract in
 [`packages/core/NORMALIZER.md`](packages/core/NORMALIZER.md): trie matching with
 word boundaries (upstream `safe_text` semantics) plus separator-skipping, so
 evasion like `a.n.j.i.n.g` is caught without flagging innocent words like `banget`.
+Every hit carries `confidence` (tier-based defaults, per-entry overrides);
+standalone number/symbol tokens (`4`, `13`, `666`) only match whole tokens in
+matching regions, never substrings.
 
 Regenerate data and sync all packages:
 
@@ -243,7 +249,9 @@ and keep [`NOTICE.md`](NOTICE.md) attribution intact (MIT requirement).
 ## Honest limitations
 
 - **Tier 3 languages** have starter vocabularies and need native-speaker contributions.
-- Cultural and regional claims carry a per-entry `source`; unverified entries are marked "verify locally".
+- Cultural and regional claims carry a per-entry `source` **and** `confidence`;
+  unverified entries are marked "verify locally". Filter by `minConfidence`
+  to tune strictness instead of trusting booleans blindly.
 - Keycap / ZWJ emoji sequences are not fully supported yet.
 - Rule-based profanity filters should be complemented by contextual review for critical moderation workflows.
 

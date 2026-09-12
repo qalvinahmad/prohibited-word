@@ -24,9 +24,10 @@ import (
 var wordsFile embed.FS
 
 type WordEntry struct {
-	W string `json:"w"`
-	S int    `json:"s"`
-	C string `json:"c"`
+	W    string  `json:"w"`
+	S    int     `json:"s"`
+	C    string  `json:"c"`
+	Conf float64 `json:"conf"`
 }
 
 type LangSpec struct {
@@ -38,10 +39,11 @@ type LangSpec struct {
 }
 
 type RegionEntry struct {
-	W    string `json:"w"`
-	Lang string `json:"lang"`
-	S    int    `json:"s"`
-	C    string `json:"c"`
+	W    string  `json:"w"`
+	Lang string  `json:"lang"`
+	S    int     `json:"s"`
+	C    string  `json:"c"`
+	Conf float64 `json:"conf"`
 }
 
 type RegionSpec struct {
@@ -54,8 +56,17 @@ type RegionSpec struct {
 type EmojiSpec struct {
 	OffensiveIn []string `json:"offensiveIn"`
 	Severity    int      `json:"severity"`
+	Conf        float64  `json:"conf"`
 	Note        string   `json:"note"`
 	Source      string   `json:"source"`
+}
+
+type SymbolSpec struct {
+	Regions  []string `json:"regions"`
+	Severity int      `json:"severity"`
+	Conf     float64  `json:"conf"`
+	Note     string   `json:"note"`
+	Source   string   `json:"source"`
 }
 
 type Dataset struct {
@@ -64,14 +75,16 @@ type Dataset struct {
 	Langs   map[string]LangSpec `json:"langs"`
 	Regions map[string]RegionSpec `json:"regions"`
 	Emoji   map[string]EmojiSpec  `json:"emoji"`
+	Symbols map[string]SymbolSpec `json:"symbols"`
 }
 
 type Found struct {
-	Word     string `json:"word"`
-	Category string `json:"category"`
-	Severity int    `json:"severity"`
-	Via      string `json:"via"`
-	Index    int    `json:"index"`
+	Word       string  `json:"word"`
+	Category   string  `json:"category"`
+	Severity   int     `json:"severity"`
+	Via        string  `json:"via"`
+	Confidence float64 `json:"confidence"`
+	Index      int     `json:"index"`
 }
 
 type Result struct {
@@ -81,13 +94,14 @@ type Result struct {
 }
 
 type Options struct {
-	Categories  []string
-	Lang        []string
-	Locale      string
-	Region      string
-	MinSeverity int
-	CustomWords []string
-	Whitelist   []string
+	Categories    []string
+	Lang          []string
+	Locale        string
+	Region        string
+	MinSeverity   int
+	MinConfidence float64
+	CustomWords   []string
+	Whitelist     []string
 }
 
 var db Dataset
@@ -190,6 +204,18 @@ type entry struct {
 	category string
 	severity int
 	via      string
+	conf     float64
+}
+
+var maturityConf = map[string]float64{
+	"curated": 0.7, "regional": 0.6, "starter": 0.4, "verified": 0.95,
+}
+
+func confOfMaturity(m string) float64 {
+	if c, ok := maturityConf[m]; ok {
+		return c
+	}
+	return 0.5
 }
 
 type engine struct {
@@ -202,10 +228,11 @@ type engine struct {
 var cacheMu sync.RWMutex
 var cache = map[string]*engine{}
 
-func getEngine(o Options, langs []string, region string, minSev int, custom []string, white map[string]bool) *engine {
+func getEngine(o Options, langs []string, region string, minSev int, minConf float64, custom []string, white map[string]bool) *engine {
 	var kb strings.Builder
 	kb.WriteString(dictID + "|" + strings.Join(langs, ",") + "|" + region + "|")
 	kb.WriteString(strings.Join(o.Categories, ",") + "|" + strconv.Itoa(minSev) + "|")
+	kb.WriteString(strconv.FormatFloat(minConf, 'f', 3, 64) + "|")
 	kb.WriteString(strings.Join(custom, ",") + "|")
 	for _, w := range o.Whitelist {
 		kb.WriteString(strings.ToLower(w) + ",")
@@ -232,7 +259,7 @@ func getEngine(o Options, langs []string, region string, minSev int, custom []st
 	var entries []entry
 	var free []bool
 	seen := map[string]bool{}
-	push := func(word, cat string, sev int, via, lang string) {
+	push := func(word, cat string, sev int, via, lang string, conf float64) {
 		w := strings.ToLower(word)
 		if w == "" || white[w] {
 			return
@@ -243,7 +270,7 @@ func getEngine(o Options, langs []string, region string, minSev int, custom []st
 			return
 		}
 		sig := lang + "\x00" + pat
-		if seen[sig] || sev < minSev {
+		if seen[sig] || sev < minSev || conf < minConf {
 			return
 		}
 		seen[sig] = true
@@ -255,7 +282,7 @@ func getEngine(o Options, langs []string, region string, minSev int, custom []st
 			}
 		}
 		free = append(free, !hasAlnum)
-		entries = append(entries, entry{word: disp, category: cat, severity: sev, via: via})
+		entries = append(entries, entry{word: disp, category: cat, severity: sev, via: via, conf: conf})
 	}
 	remove := map[string]bool{}
 	if rs, ok := db.Regions[region]; ok {
@@ -283,6 +310,12 @@ func getEngine(o Options, langs []string, region string, minSev int, custom []st
 			activeLangs[strings.ToLower(p.Parent)] = true
 		}
 	}
+	confOf := func(e WordEntry, maturity string) float64 {
+		if e.Conf != 0 {
+			return e.Conf
+		}
+		return confOfMaturity(maturity)
+	}
 	for lang, spec := range db.Langs {
 		if len(activeLangs) > 0 {
 			langLow := strings.ToLower(lang)
@@ -299,7 +332,7 @@ func getEngine(o Options, langs []string, region string, minSev int, custom []st
 			if remove[strings.ToLower(e.W)+"\x00"+lang] {
 				continue
 			}
-			push(e.W, cat, sevOf(e), "word", lang)
+			push(e.W, cat, sevOf(e), "word", lang, confOf(e, spec.Maturity))
 		}
 	}
 	if rs, ok := db.Regions[region]; ok {
@@ -318,7 +351,11 @@ func getEngine(o Options, langs []string, region string, minSev int, custom []st
 			if sev == 0 {
 				sev = 2
 			}
-			push(e.W, cat, sev, "regional", e.Lang)
+			conf := e.Conf
+			if conf == 0 {
+				conf = 0.6
+			}
+			push(e.W, cat, sev, "regional", e.Lang, conf)
 		}
 	}
 	for raw, spec := range db.Emoji {
@@ -339,10 +376,14 @@ func getEngine(o Options, langs []string, region string, minSev int, custom []st
 		if sev == 0 {
 			sev = 2
 		}
-		push(EmojiKey(raw), "gesture", sev, "emoji", "")
+		conf := spec.Conf
+		if conf == 0 {
+			conf = 0.6
+		}
+		push(EmojiKey(raw), "gesture", sev, "emoji", "", conf)
 	}
 	for _, w := range custom {
-		push(w, "custom", 2, "custom", "")
+		push(w, "custom", 2, "custom", "", 1.0)
 	}
 	root := &tnode{next: map[rune]*tnode{}}
 	maxLen := 0
@@ -412,7 +453,7 @@ func Validate(text string, o Options) Result {
 	for _, w := range o.Whitelist {
 		white[strings.ToLower(w)] = true
 	}
-	e := getEngine(o, langs, region, minSev, custom, white)
+	e := getEngine(o, langs, region, minSev, o.MinConfidence, custom, white)
 	norm := []rune(Normalize(text))
 	n := len(norm)
 	alnum := make([]bool, n)
@@ -475,7 +516,35 @@ func Validate(text string, o Options) Result {
 		}
 		found = append(found, Found{Word: e.entries[h.idx].word, Category: e.entries[h.idx].category,
 			Severity: e.entries[h.idx].severity, Via: e.entries[h.idx].via,
+			Confidence: e.entries[h.idx].conf,
 			Index: strings.Index(lower, e.entries[h.idx].word)})
+	}
+	// Standalone symbols (pre-leet): whole tokens only, never substrings.
+	if region != "" && len(db.Symbols) > 0 {
+		seenTok := map[string]bool{}
+		for _, tok := range strings.FieldsFunc(lower, func(r rune) bool { return !isAlnum(r) }) {
+			spec, ok := db.Symbols[tok]
+			if !ok || seenTok[tok] {
+				continue
+			}
+			seenTok[tok] = true
+			inRegion := false
+			for _, c := range spec.Regions {
+				if c == region {
+					inRegion = true
+					break
+				}
+			}
+			if !inRegion || spec.Conf < o.MinConfidence {
+				continue
+			}
+			sev := spec.Severity
+			if sev == 0 {
+				sev = 1
+			}
+			found = append(found, Found{Word: tok, Category: "symbol", Severity: sev,
+				Via: "symbol", Confidence: spec.Conf, Index: strings.Index(lower, tok)})
+		}
 	}
 	for i := 0; i < len(found); i++ {
 		for j := i + 1; j < len(found); j++ {
@@ -502,7 +571,7 @@ func LoadDataset(d Dataset) {
 	cacheMu.Unlock()
 }
 
-// FetchDataset downloads a v3 dataset JSON from url.
+// FetchDataset downloads a v4 dataset JSON from url.
 func FetchDataset(url string) (Dataset, error) {
 	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {

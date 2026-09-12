@@ -27,4 +27,15 @@ describe('prohibited-word', () => {
     assert.equal(validate('kamu anjing', { minSeverity: 3 }).isValid, true);
     assert.equal(validate('kamu anjing').maxSeverity, 2);
   });
+  it('symbol-standalone', () => {
+    assert.equal(contains('floor 13', { locale: 'en-US' }), true);
+    assert.equal(contains('room 136', { locale: 'en-US' }), false);
+    assert.equal(contains('nomor 4', { locale: 'zh-CN' }), true);
+    assert.equal(contains('nomor 4', { locale: 'id-ID' }), false);
+  });
+  it('confidence', () => {
+    assert.equal(validate('kamu anjing', { minConfidence: 0.8 }).isValid, true);
+    assert.equal(validate('kamu anjing').found[0].confidence, 0.7);
+    assert.equal(validate('good 👍', { locale: 'en-AU' }).found[0].confidence, 0.6);
+  });
 });

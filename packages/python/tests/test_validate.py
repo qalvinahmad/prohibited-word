@@ -36,3 +36,15 @@ def test_severity():
     from prohibited_word import validate
     assert validate("kamu anjing", min_severity=3)["is_valid"] is True
     assert validate("kamu anjing")["max_severity"] == 2
+
+def test_symbol_standalone():
+    from prohibited_word import contains
+    assert contains("floor 13", locale="en-US") is True
+    assert contains("room 136", locale="en-US") is False
+    assert contains("nomor 4", locale="zh-CN") is True
+    assert contains("nomor 4", locale="id-ID") is False
+
+def test_confidence():
+    from prohibited_word import validate
+    assert validate("kamu anjing", min_confidence=0.8)["is_valid"] is True
+    assert validate("kamu anjing")["found"][0]["confidence"] == 0.7

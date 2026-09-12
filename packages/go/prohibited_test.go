@@ -64,3 +64,27 @@ func TestSeverity(t *testing.T) {
 		t.Fatal("maxSeverity seharusnya 2")
 	}
 }
+
+func TestSymbolStandalone(t *testing.T) {
+	if !Contains("floor 13", Options{Locale: "en-US"}) {
+		t.Fatal("simbol 13 US tidak ketahuan")
+	}
+	if Contains("room 136", Options{Locale: "en-US"}) {
+		t.Fatal("136 bukan token utuh, seharusnya bersih")
+	}
+	if !Contains("nomor 4", Options{Locale: "zh-CN"}) {
+		t.Fatal("simbol 4 CN tidak ketahuan")
+	}
+	if Contains("nomor 4", Options{Locale: "id-ID"}) {
+		t.Fatal("simbol 4 ID seharusnya bersih")
+	}
+}
+
+func TestConfidence(t *testing.T) {
+	if !Validate("kamu anjing", Options{MinConfidence: 0.8}).IsValid {
+		t.Fatal("minConfidence 0.8 seharusnya menyaring anjing (0.7)")
+	}
+	if Validate("kamu anjing", Options{}).Found[0].Confidence != 0.7 {
+		t.Fatal("confidence anjing seharusnya 0.7 (curated)")
+	}
+}

@@ -51,7 +51,20 @@ ditambah separator-skip, lapisan locale/region/emoji, dan severity.
 `index` best-effort via `indexOf` (`-1` untuk leet/evasion).
 Tidak pernah throw untuk input aneh. Cache trie per kombinasi opts (maks 32).
 
+## v4: confidence + symbols + parent locales
+
+- Tiap hit membawa `confidence` (0..1). Kata: default dari maturitas
+  bahasanya (`curated` 0.7, `regional` 0.6, `starter` 0.4, `verified` 0.95)
+  kecuali override `conf` eksplisit. Regional/emoji/simbol: `conf` wajib
+  di data. `minConfidence` memfilter; `customWords` selalu 1.0.
+- Simbol/angka (`symbols`): cocok HANYA sebagai token utuh pra-leet
+  (`floor 13` ✔ di region cocok, `136` ✘). Tidak pernah substring,
+  agar tidak merusak peta leet (`4→a`).
+- Locale penuh diutamakan: `en-AU` → kode `en-au` + parent `en-us`;
+  regional (`en-au`) membawa kata spesifik + mewarisi base.
+- Format remote = words.json v4.
+
 ## Remote update (offline-first)
 
 Dataset bawaan selalu offline. `fetchDataset(url)` + `checkForUpdates(url)` +
-`loadDataset(db)` tersedia di 5 bahasa; format remote = words.json v3.
+`loadDataset(db)` tersedia di 5 bahasa.

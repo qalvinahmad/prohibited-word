@@ -367,10 +367,10 @@ REGIONS = {
 
 # Emoji map
 EMOJI = {
-    "\U0001F595": {"offensiveIn": ["*"], "severity": 3,
+    "🖕": {"offensiveIn": ["*"], "severity": 3, "conf": 0.9,
                    "note": "middle finger — offensif universal",
                    "source": "general knowledge"},
-    "\U0001F44D": {"offensiveIn": ["IR", "AF", "AU"], "severity": 2,
+    "👍": {"offensiveIn": ["IR", "AF", "AU"], "severity": 2, "conf": 0.6,
                    "note": "thumbs-up dianggap kasar di sebagian Timur Tengah & Australia",
                    "source": "travel etiquette guides — verify locally"},
 }

@@ -28,6 +28,12 @@ DICT_ID = f"{DB.get('version', 0)}:{len(DB.get('langs', {}))}"
 _LEET = {"@": "a", "4": "a", "8": "b", "(": "c", "3": "e", "1": "i", "!": "i",
         "0": "o", "$": "s", "5": "s", "7": "t", "+": "t", "v": "u", "#": "h"}
 
+_MATURITY_CONF = {"curated": 0.7, "regional": 0.6, "starter": 0.4, "verified": 0.95}
+
+
+def _conf_of_maturity(m) -> float:
+    return _MATURITY_CONF.get(m or "", 0.5)
+
 
 def _is_emoji(c: str) -> bool:
     return unicodedata.category(c) == "So"
@@ -110,16 +116,16 @@ def _scan(root, runes: list[str], alnum: list[bool], free: list[bool], hits: lis
 _CACHE: dict = {}
 
 
-def _engine(langs, region, categories, min_sev, custom, white):
-    key = (DICT_ID, tuple(langs), region, tuple(categories or ()), min_sev, tuple(custom), tuple(sorted(white)))
+def _engine(langs, region, categories, min_sev, min_conf, custom, white):
+    key = (DICT_ID, tuple(langs), region, tuple(categories or ()), min_sev, min_conf, tuple(custom), tuple(sorted(white)))
     eng = _CACHE.get(key)
     if eng is not None:
         return eng
-    entries: list[tuple[str, str, int, str]] = []
+    entries: list[tuple[str, str, int, str, float]] = []
     free: list[bool] = []
     seen: set[str] = set()
 
-    def push(word: str, cat: str, sev: int, via: str, lang: str | None):
+    def push(word: str, cat: str, sev: int, via: str, lang: str | None, conf: float):
         w = str(word).lower()
         if not w or w in white:
             return
@@ -128,11 +134,11 @@ def _engine(langs, region, categories, min_sev, custom, white):
         if not pat or pat in white or disp in white:
             return
         sig = f"{lang or ''}\0{pat}"
-        if sig in seen or sev < min_sev:
+        if sig in seen or sev < min_sev or conf < min_conf:
             return
         seen.add(sig)
         free.append(not any(c.isalnum() for c in pat))
-        entries.append((disp, cat, sev, via))
+        entries.append((disp, cat, sev, via, conf))
 
     remove = set()
     reg = (DB.get("regions") or {}).get(region or "", {})
@@ -160,7 +166,8 @@ def _engine(langs, region, categories, min_sev, custom, white):
                 continue
             if (str(e["w"]).lower(), lang) in remove:
                 continue
-            push(e["w"], cat, e.get("s", 2), "word", lang)
+            push(e["w"], cat, e.get("s", 2), "word", lang,
+                 float(e.get("conf", _conf_of_maturity(spec.get("maturity")))))
 
     for e in reg.get("add", []):
         if langs and e["lang"] not in langs:
@@ -168,18 +175,18 @@ def _engine(langs, region, categories, min_sev, custom, white):
         cat = e.get("c", "profanity")
         if categories and cat not in categories:
             continue
-        push(e["w"], cat, e.get("s", 2), "regional", e["lang"])
+        push(e["w"], cat, e.get("s", 2), "regional", e["lang"], float(e.get("conf", 0.6)))
 
     for raw, spec in (DB.get("emoji") or {}).items():
         off = spec.get("offensiveIn", [])
         if "*" not in off and (not region or region not in off):
             continue
-        push(emoji_key(raw), "gesture", spec.get("severity", 2), "emoji", None)
+        push(emoji_key(raw), "gesture", spec.get("severity", 2), "emoji", None, float(spec.get("conf", 0.6)))
 
     for w in custom:
-        push(w, "custom", 2, "custom", None)
+        push(w, "custom", 2, "custom", None, 1.0)
 
-    patterns = [(entry_pattern(w), i) for i, (w, _, _, _) in enumerate(entries)]
+    patterns = [(entry_pattern(w), i) for i, (w, _, _, _, _) in enumerate(entries)]
     eng = (entries, free, _build_trie(patterns))
     if len(_CACHE) > 32:
         _CACHE.pop(next(iter(_CACHE)))
@@ -188,7 +195,8 @@ def _engine(langs, region, categories, min_sev, custom, white):
 
 
 def validate(text, categories=None, lang=None, locale=None, region=None,
-             min_severity: int = 1, custom_words=None, whitelist=None) -> dict:
+             min_severity: int = 1, min_confidence: float = 0,
+             custom_words=None, whitelist=None) -> dict:
     original = str(text or "")
     if not original.strip():
         return {"is_valid": True, "max_severity": 0, "found": []}
@@ -205,7 +213,7 @@ def validate(text, categories=None, lang=None, locale=None, region=None,
     region = region or loc.get("region") or ""
     white = {str(w).lower() for w in (whitelist or [])}
     custom = [str(w).lower() for w in (custom_words or [])]
-    entries, free, trie = _engine(langs, region, categories, min_severity, custom, white)
+    entries, free, trie = _engine(langs, region, categories, min_severity, min_confidence, custom, white)
     norm = normalize(original)
     runes = list(norm)
     alnum = [c.isalnum() for c in runes]
@@ -219,7 +227,23 @@ def validate(text, categories=None, lang=None, locale=None, region=None,
         kept.append(h)
     lo = original.lower()
     found = [{"word": entries[i][0], "category": entries[i][1], "severity": entries[i][2],
-              "via": entries[i][3], "index": lo.find(entries[i][0])} for i, _, _ in kept]
+              "via": entries[i][3], "confidence": entries[i][4],
+              "index": lo.find(entries[i][0])} for i, _, _ in kept]
+    if region and DB.get("symbols"):
+        tokens = [t for t in re.split(r"[^\w]", lo, flags=re.UNICODE) if t]
+        seen_tok = set()
+        for tok in tokens:
+            spec = DB["symbols"].get(tok)
+            if not spec or tok in seen_tok:
+                continue
+            seen_tok.add(tok)
+            if region not in (spec.get("regions") or []):
+                continue
+            conf = float(spec.get("conf", 0.5))
+            if conf < min_confidence:
+                continue
+            found.append({"word": tok, "category": "symbol", "severity": spec.get("severity", 1),
+                          "via": "symbol", "confidence": conf, "index": lo.find(tok)})
     found.sort(key=lambda f: f["index"])
     return {"is_valid": not found, "max_severity": max([f["severity"] for f in found] or [0]), "found": found}
 

@@ -45,6 +45,9 @@ export function displayForm(word) {
   return normalize(word).replace(EDGE_STRIP, '');
 }
 
+const MATURITY_CONF = { curated: 0.7, regional: 0.6, starter: 0.4, verified: 0.95 };
+const confOfMaturity = (m) => MATURITY_CONF[m] ?? 0.5;
+
 export function parseLocale(locale) {
   if (!locale) return {};
   const m = String(locale).split(/[-_]/);
@@ -98,13 +101,13 @@ function scanTrie(root, runes, isAlnum, free, hits) {
 const trieCache = new Map();
 
 function getEngine(o) {
-  const key = `${DICT_ID}|${o.langs.join(',')}|${o.region}|${(o.categories ?? []).join(',')}|${o.minSeverity}|${o.customWords.join(',')}|${[...o.whitelist].join(',')}`;
+  const key = `${DICT_ID}|${o.langs.join(',')}|${o.region}|${(o.categories ?? []).join(',')}|${o.minSeverity}|${o.minConfidence}|${o.customWords.join(',')}|${[...o.whitelist].join(',')}`;
   let t = trieCache.get(key);
   if (t) return t;
   const entries = [];
   const free = [];
   const seen = new Set();
-  const push = (word, category, severity, via, lang) => {
+  const push = (word, category, severity, via, lang, conf) => {
     const w = String(word).toLowerCase();
     if (!w || o.whitelist.has(w)) return;
     const pat = entryPattern(w);
@@ -114,9 +117,9 @@ function getEngine(o) {
     const sig = `${lang ?? ''}\0${pat}`;
     if (seen.has(sig)) return;
     seen.add(sig);
-    if (severity < o.minSeverity) return;
+    if (severity < o.minSeverity || conf < o.minConfidence) return;
     free.push(!HAS_ALNUM.test(pat));
-    entries.push({ word: disp, category, severity, via });
+    entries.push({ word: disp, category, severity, via, confidence: conf });
   };
   const remove = new Set();
   if (o.region && DB.regions?.[o.region]?.remove) {
@@ -141,22 +144,22 @@ function getEngine(o) {
     for (const e of spec.words ?? []) {
       if (o.categories && !o.categories.includes(e.c ?? 'profanity')) continue;
       if (remove.has(`${lang}\0${String(e.w).toLowerCase()}`)) continue;
-      push(e.w, e.c ?? 'profanity', e.s ?? 2, 'word', lang);
+      push(e.w, e.c ?? 'profanity', e.s ?? 2, 'word', lang, e.conf ?? confOfMaturity(spec.maturity));
     }
   }
   if (o.region && DB.regions?.[o.region]?.add) {
     for (const e of DB.regions[o.region].add) {
       if (o.langs.length && !o.langs.includes(e.lang)) continue;
       if (o.categories && !o.categories.includes(e.c ?? 'profanity')) continue;
-      push(e.w, e.c ?? 'profanity', e.s ?? 2, 'regional', e.lang);
+      push(e.w, e.c ?? 'profanity', e.s ?? 2, 'regional', e.lang, e.conf ?? 0.6);
     }
   }
   for (const [raw, spec] of Object.entries(DB.emoji ?? {})) {
     const uni = (spec.offensiveIn ?? []).includes('*');
     if (!uni && (!o.region || !(spec.offensiveIn ?? []).includes(o.region))) continue;
-    push(emojiKey(raw), 'gesture', spec.severity ?? 2, 'emoji', undefined);
+    push(emojiKey(raw), 'gesture', spec.severity ?? 2, 'emoji', undefined, spec.conf ?? 0.6);
   }
-  for (const w of o.customWords) push(w, 'custom', 2, 'custom', undefined);
+  for (const w of o.customWords) push(w, 'custom', 2, 'custom', undefined, 1.0);
   const patterns = entries.map((e, idx) => ({ p: entryPattern(e.word), idx }));
   t = { entries, free, trie: buildTrie(patterns) };
   if (trieCache.size > 32) trieCache.delete(trieCache.keys().next().value);
@@ -180,6 +183,7 @@ function resolveOpts(opts = {}) {
     region: opts.region ?? loc.region ?? '',
     categories: opts.categories ?? null,
     minSeverity: opts.minSeverity ?? 1,
+    minConfidence: opts.minConfidence ?? 0,
     customWords: (opts.customWords ?? []).map((w) => String(w).toLowerCase()),
     whitelist: new Set((opts.whitelist ?? []).map((w) => String(w).toLowerCase())),
   };
@@ -207,8 +211,23 @@ export function validate(text, opts) {
     category: t.entries[h.idx].category,
     severity: t.entries[h.idx].severity,
     via: t.entries[h.idx].via,
+    confidence: t.entries[h.idx].confidence,
     index: lo.indexOf(t.entries[h.idx].word),
   }));
+  // Simbol standalone (pra-leet): token utuh saja, bukan substring.
+  if (o.region && DB.symbols) {
+    const tokens = lo.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    const seenTok = new Set();
+    for (const tok of tokens) {
+      const spec = DB.symbols[tok];
+      if (!spec || seenTok.has(tok)) continue;
+      seenTok.add(tok);
+      if (!(spec.regions ?? []).includes(o.region)) continue;
+      const conf = spec.conf ?? 0.5;
+      if (conf < o.minConfidence) continue;
+      found.push({ word: tok, category: 'symbol', severity: spec.severity ?? 1, via: 'symbol', confidence: conf, index: lo.indexOf(tok) });
+    }
+  }
   found.sort((a, b) => a.index - b.index);
   return { isValid: found.length === 0, maxSeverity: found.reduce((m, f) => Math.max(m, f.severity), 0), found };
 }

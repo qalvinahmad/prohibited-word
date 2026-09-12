@@ -79,10 +79,12 @@
     { label: 'Javanese (jv)', text: 'kamu jancok', locale: 'jv' },
     { label: 'Thumbs-up AU', text: 'good 👍', locale: 'en-AU' },
     { label: 'Thumbs-up US', text: 'good 👍', locale: 'en-US' },
-    { label: 'Regional ID', text: 'anak yatim piatu dibantu', locale: 'id-ID' }
+    { label: 'Regional ID', text: 'anak yatim piatu dibantu', locale: 'id-ID' },
+    { label: 'Number 13 US', text: 'meeting room 13', locale: 'en-US' },
+    { label: 'OK sign FR', text: 'nice 👌', locale: 'fr-FR' }
   ];
 
-  var LOCALES = ['', 'id-ID', 'en-US', 'en-AU', 'jv', 'ar-SA', 'ms-MY', 'nl-NL', 'en', 'id'];
+  var LOCALES = ['', 'id-ID', 'en-US', 'en-AU', 'en-GB', 'jv', 'ar-SA', 'ms-MY', 'nl-NL', 'pt-BR', 'es-MX', 'fr-CA', 'zh-CN', 'en', 'id'];
 
   function el(id) { return document.getElementById(id); }
 
@@ -132,7 +134,7 @@
     LOCALES.forEach(function (l) {
       var o = document.createElement('option');
       o.value = l;
-      o.textContent = l === '' ? 'Auto (all 124 languages)' : l;
+      o.textContent = l === '' ? 'Auto (all 130 languages)' : l;
       locale.appendChild(o);
     });
     var presets = el('presets');
@@ -173,7 +175,7 @@
       html += '<div class="chips">';
       r.found.forEach(function (f) {
         html += '<span class="chip"><b>' + escapeHtml(f.word) + '</b>'
-          + '<i>' + escapeHtml(f.category) + ' · sev ' + f.severity + ' · ' + escapeHtml(f.via) + '</i></span>';
+          + '<i>' + escapeHtml(f.category) + ' · sev ' + f.severity + ' · ' + escapeHtml(f.via) + ' · conf ' + f.confidence + '</i></span>';
       });
       html += '</div>';
     }
@@ -189,12 +191,13 @@
   function fillStats(db) {
     var langs = Object.keys(db.langs || {});
     var total = langs.reduce(function (n, l) { return n + (db.langs[l].words || []).length; }, 0);
-    var drafts = langs.filter(function (l) { return (db.langs[l].maturity || '') !== 'curated-upstream'; }).length;
+    var starter = langs.filter(function (l) { return db.langs[l].maturity === 'starter'; }).length;
+    var regional = langs.filter(function (l) { return db.langs[l].maturity === 'regional'; }).length;
     el('stat-langs').textContent = langs.length;
     el('stat-words').textContent = total.toLocaleString('en-US');
     el('stat-regions').textContent = Object.keys(db.regions || {}).length;
     el('stat-emoji').textContent = Object.keys(db.emoji || {}).length;
-    el('maturity-note').textContent = drafts + ' of ' + langs.length + ' languages are draft/seed and need native-speaker review.';
+    el('maturity-note').textContent = starter + ' starter + ' + regional + ' regional of ' + langs.length + ' languages need native-speaker review — see tiers in README.';
   }
 
   document.addEventListener('DOMContentLoaded', function () {

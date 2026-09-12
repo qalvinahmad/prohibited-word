@@ -6,15 +6,16 @@ import FoundationNetworking
 // Data v3: 124 bahasa + regional overrides + emoji + severity.
 // Mesin: trie + word-boundary + separator-skip; locale; remote update opsional.
 
-public struct FoundWord: Sendable { public let word: String; public let category: String; public let severity: Int; public let via: String; public let index: Int }
+public struct FoundWord: Sendable { public let word: String; public let category: String; public let severity: Int; public let via: String; public let confidence: Double; public let index: Int }
 public struct ValidationResult: Sendable { public let isValid: Bool; public let maxSeverity: Int; public let found: [FoundWord] }
 
-private struct WordEntry: Decodable { let w: String; let s: Int?; let c: String? }
+private struct WordEntry: Decodable { let w: String; let s: Int?; let c: String?; let conf: Double? }
 private struct LangSpec: Decodable { let name: String?; let parent: String?; let maturity: String?; let source: String?; let words: [WordEntry] }
-private struct RegionEntry: Decodable { let w: String; let lang: String; let s: Int?; let c: String? }
+private struct RegionEntry: Decodable { let w: String; let lang: String; let s: Int?; let c: String?; let conf: Double? }
 private struct RegionSpec: Decodable { let note: String?; let source: String?; let add: [RegionEntry]?; let remove: [RegionEntry]? }
-private struct EmojiSpec: Decodable { let offensiveIn: [String]?; let severity: Int?; let note: String?; let source: String? }
-private struct DB: Decodable { let version: Int?; let langs: [String: LangSpec]; let regions: [String: RegionSpec]?; let emoji: [String: EmojiSpec]? }
+private struct EmojiSpec: Decodable { let offensiveIn: [String]?; let severity: Int?; let conf: Double?; let note: String?; let source: String? }
+private struct SymbolSpec: Decodable { let regions: [String]?; let severity: Int?; let conf: Double?; let note: String?; let source: String? }
+private struct DB: Decodable { let version: Int?; let langs: [String: LangSpec]; let regions: [String: RegionSpec]?; let emoji: [String: EmojiSpec]?; let symbols: [String: SymbolSpec]? }
 
 private let leet: [Character: Character] = ["@": "a", "4": "a", "8": "b", "(": "c", "3": "e", "1": "i", "!": "i", "0": "o", "$": "s", "5": "s", "7": "t", "+": "t", "v": "u", "#": "h"]
 
@@ -68,7 +69,10 @@ private func isAlnum(_ c: Character) -> Bool { c.isLetter || c.isNumber }
 private final class Node { var next: [Character: Node] = [:]; var out: [Int] = [] }
 private struct Hit { let idx: Int; let start: Int; let end: Int }
 
-private struct Entry: Sendable { let word: String; let category: String; let severity: Int; let via: String }
+private struct Entry: Sendable { let word: String; let category: String; let severity: Int; let via: String; let confidence: Double }
+
+private let maturityConf: [String: Double] = ["curated": 0.7, "regional": 0.6, "starter": 0.4, "verified": 0.95]
+private func confOfMaturity(_ m: String?) -> Double { maturityConf[m ?? ""] ?? 0.5 }
 
 private final class Engine: @unchecked Sendable {
   let entries: [Entry]; let free: [Bool]
@@ -88,7 +92,7 @@ private var wordDB: DB = {
   guard let url = Bundle.module.url(forResource: "words", withExtension: "json"),
         let data = try? Data(contentsOf: url),
         let db = try? JSONDecoder().decode(DB.self, from: data) else {
-    return DB(version: 0, langs: [:], regions: nil, emoji: nil)
+    return DB(version: 0, langs: [:], regions: nil, emoji: nil, symbols: nil)
   }
   return db
 }()
@@ -109,23 +113,23 @@ public func loadDataset(_ dbData: [String: Any]) {
 }
 
 
-private func getEngine(langs: [String], region: String, categories: [String]?, minSeverity: Int, customWords: [String], whitelist: Set<String>) -> Engine {
-  let key = "\(dictID)|\(langs.joined(separator: ","))|\(region)|\(categories?.joined(separator: ",") ?? "")|\(minSeverity)|\(customWords.joined(separator: ","))|\(whitelist.sorted().joined(separator: ","))"
+private func getEngine(langs: [String], region: String, categories: [String]?, minSeverity: Int, minConfidence: Double, customWords: [String], whitelist: Set<String>) -> Engine {
+  let key = "\(dictID)|\(langs.joined(separator: ","))|\(region)|\(categories?.joined(separator: ",") ?? "")|\(minSeverity)|\(minConfidence)|\(customWords.joined(separator: ","))|\(whitelist.sorted().joined(separator: ","))"
   cacheLock.lock()
   if let hit = cache[key] { cacheLock.unlock(); return hit }
   cacheLock.unlock()
   var entries: [Entry] = []; var free: [Bool] = []; var patterns: [String] = []; var seen = Set<String>()
-  func push(_ word: String, _ cat: String, _ sev: Int, _ via: String, _ lang: String?) {
+  func push(_ word: String, _ cat: String, _ sev: Int, _ via: String, _ lang: String?, _ conf: Double) {
     let w = word.lowercased()
     if w.isEmpty || whitelist.contains(w) { return }
     let pat = entryPattern(w)
     let disp = displayForm(w)
     if pat.isEmpty || whitelist.contains(pat) || whitelist.contains(disp) { return }
     let sig = "\(lang ?? "")\u{0}\(pat)"
-    if seen.contains(sig) || sev < minSeverity { return }
+    if seen.contains(sig) || sev < minSeverity || conf < minConfidence { return }
     seen.insert(sig)
     free.append(!pat.contains(where: { $0.isLetter || $0.isNumber }))
-    entries.append(Entry(word: disp, category: cat, severity: sev, via: via))
+    entries.append(Entry(word: disp, category: cat, severity: sev, via: via, confidence: conf))
     patterns.append(pat)
   }
   var remove = Set<String>()
@@ -152,7 +156,7 @@ private func getEngine(langs: [String], region: String, categories: [String]?, m
       let cat = e.c ?? "profanity"
       if let categories, !categories.contains(cat) { continue }
       if remove.contains("\(e.w.lowercased())\u{0}\(lang)") { continue }
-      push(e.w, cat, e.s ?? 2, "word", lang)
+      push(e.w, cat, e.s ?? 2, "word", lang, e.conf ?? confOfMaturity(spec.maturity))
     }
   }
   if let rs = wordDB.regions?[region], let adds = rs.add {
@@ -160,23 +164,23 @@ private func getEngine(langs: [String], region: String, categories: [String]?, m
       if !langs.isEmpty && !langs.contains(e.lang) { continue }
       let cat = e.c ?? "profanity"
       if let categories, !categories.contains(cat) { continue }
-      push(e.w, cat, e.s ?? 2, "regional", e.lang)
+      push(e.w, cat, e.s ?? 2, "regional", e.lang, e.conf ?? 0.6)
     }
   }
   if let emoji = wordDB.emoji {
     for (raw, spec) in emoji {
       let off = spec.offensiveIn ?? []
       if !off.contains("*") && (region.isEmpty || !off.contains(region)) { continue }
-      push(emojiKey(raw), "gesture", spec.severity ?? 2, "emoji", nil)
+      push(emojiKey(raw), "gesture", spec.severity ?? 2, "emoji", nil, spec.conf ?? 0.6)
     }
   }
-  for w in customWords { push(w, "custom", 2, "custom", nil) }
+  for w in customWords { push(w, "custom", 2, "custom", nil, 1.0) }
   let eng = Engine(entries: entries, free: free, patterns: patterns)
   cacheLock.lock(); if cache.count > 32 { cache.removeValue(forKey: cache.keys.first!) }; cache[key] = eng; cacheLock.unlock()
   return eng
 }
 
-public func validate(_ text: String?, categories: [String]? = nil, lang: [String]? = nil, locale: String? = nil, region: String? = nil, minSeverity: Int = 1, customWords: [String] = [], whitelist: [String] = []) -> ValidationResult {
+public func validate(_ text: String?, categories: [String]? = nil, lang: [String]? = nil, locale: String? = nil, region: String? = nil, minSeverity: Int = 1, minConfidence: Double = 0, customWords: [String] = [], whitelist: [String] = []) -> ValidationResult {
   let original = text ?? ""
   if original.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return ValidationResult(isValid: true, maxSeverity: 0, found: []) }
   let loc = parseLocale(locale)
@@ -193,7 +197,7 @@ public func validate(_ text: String?, categories: [String]? = nil, lang: [String
   }
   let reg = region ?? loc.region ?? ""
   let white = Set(whitelist.map { $0.lowercased() })
-  let eng = getEngine(langs: langs, region: reg, categories: categories, minSeverity: minSeverity, customWords: customWords.map { $0.lowercased() }, whitelist: white)
+  let eng = getEngine(langs: langs, region: reg, categories: categories, minSeverity: minSeverity, minConfidence: minConfidence, customWords: customWords.map { $0.lowercased() }, whitelist: white)
   let runes = Array(normalize(original))
   let alnum = runes.map(isAlnum)
   var hits: [Hit] = []
@@ -226,16 +230,30 @@ public func validate(_ text: String?, categories: [String]? = nil, lang: [String
   var kept: [Hit] = []
   for h in hits { if let last = kept.last, last.end >= h.end { continue }; kept.append(h) }
   let lo = original.lowercased() as NSString
-  let found = kept.map { h -> FoundWord in
+  var found = kept.map { h -> FoundWord in
     let w = eng.entries[h.idx].word
     let r = lo.range(of: w)
-    return FoundWord(word: w, category: eng.entries[h.idx].category, severity: eng.entries[h.idx].severity, via: eng.entries[h.idx].via, index: r.location == NSNotFound ? -1 : r.location)
-  }.sorted { $0.index < $1.index }
-  return ValidationResult(isValid: found.isEmpty, maxSeverity: found.map(\.severity).max() ?? 0, found: found)
+    return FoundWord(word: w, category: eng.entries[h.idx].category, severity: eng.entries[h.idx].severity, via: eng.entries[h.idx].via, confidence: eng.entries[h.idx].confidence, index: r.location == NSNotFound ? -1 : r.location)
+  }
+  // Simbol standalone (pra-leet): token utuh saja, bukan substring.
+  if !reg.isEmpty, let syms = wordDB.symbols {
+    let tokens = lo.lowercased.split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init)
+    var seenTok = Set<String>()
+    for tok in tokens {
+      guard let spec = syms[tok], seenTok.insert(tok).inserted else { continue }
+      guard (spec.regions ?? []).contains(reg) else { continue }
+      let conf = spec.conf ?? 0.5
+      guard conf >= minConfidence else { continue }
+      let r = lo.range(of: tok)
+      found.append(FoundWord(word: tok, category: "symbol", severity: spec.severity ?? 1, via: "symbol", confidence: conf, index: r.location == NSNotFound ? -1 : r.location))
+    }
+  }
+  found.sort { $0.index < $1.index }
+  return ValidationResult(isValid: found.isEmpty, maxSeverity: found.map { $0.severity }.max() ?? 0, found: found)
 }
 
-public func containsProhibited(_ text: String?, categories: [String]? = nil, lang: [String]? = nil, locale: String? = nil, region: String? = nil, minSeverity: Int = 1, customWords: [String] = [], whitelist: [String] = []) -> Bool {
-  !validate(text, categories: categories, lang: lang, locale: locale, region: region, minSeverity: minSeverity, customWords: customWords, whitelist: whitelist).isValid
+public func containsProhibited(_ text: String?, categories: [String]? = nil, lang: [String]? = nil, locale: String? = nil, region: String? = nil, minSeverity: Int = 1, minConfidence: Double = 0, customWords: [String] = [], whitelist: [String] = []) -> Bool {
+  !validate(text, categories: categories, lang: lang, locale: locale, region: region, minSeverity: minSeverity, minConfidence: minConfidence, customWords: customWords, whitelist: whitelist).isValid
 }
 
 // MARK: - Remote update (offline-first; panggil eksplisit bila perlu)

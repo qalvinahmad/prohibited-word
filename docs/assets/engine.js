@@ -5,6 +5,8 @@
   var DICT_ID = '0:0';
 
   var LEET = { '@': 'a', '4': 'a', '8': 'b', '(': 'c', '3': 'e', '1': 'i', '!': 'i', '0': 'o', '$': 's', '5': 's', '7': 't', '+': 't', 'v': 'u', '#': 'h' };
+  var MATURITY_CONF = { curated: 0.7, regional: 0.6, starter: 0.4, verified: 0.95 };
+  function confOfMaturity(m) { return MATURITY_CONF[m] || 0.5; }
   var DIA = new RegExp('[' + String.fromCharCode(0x300) + '-' + String.fromCharCode(0x36f) + ']', 'g');
   var ALNUM = /[\p{L}\p{N}]/u;
   var EMOJI_WRAP = /(\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)/gu;
@@ -78,11 +80,11 @@
   var trieCache = new Map();
 
   function getEngine(o) {
-    var key = DICT_ID + '|' + o.langs.join(',') + '|' + o.region + '|' + (o.categories || []).join(',') + '|' + o.minSeverity + '|' + o.customWords.join(',') + '|' + Array.from(o.whitelist).join(',');
+    var key = DICT_ID + '|' + o.langs.join(',') + '|' + o.region + '|' + (o.categories || []).join(',') + '|' + o.minSeverity + '|' + o.minConfidence + '|' + o.customWords.join(',') + '|' + Array.from(o.whitelist).join(',');
     var t = trieCache.get(key);
     if (t) return t;
     var entries = [], free = [], seen = {};
-    function push(word, category, severity, via, lang) {
+    function push(word, category, severity, via, lang, conf) {
       var w = String(word).toLowerCase();
       if (!w || o.whitelist.has(w)) return;
       var pat = entryPattern(w);
@@ -92,21 +94,35 @@
       var sig = (lang || '') + '\0' + pat;
       if (seen[sig]) return;
       seen[sig] = true;
-      if (severity < o.minSeverity) return;
+      if (severity < o.minSeverity || conf < o.minConfidence) return;
       free.push(!HAS_ALNUM.test(pat));
-      entries.push({ word: disp, category: category, severity: severity, via: via });
+      entries.push({ word: disp, category: category, severity: severity, via: via, confidence: conf });
     }
     var remove = {};
     if (o.region && DB.regions && DB.regions[o.region] && DB.regions[o.region].remove) {
       DB.regions[o.region].remove.forEach(function (r) { remove[String(r.w).toLowerCase() + '\0' + r.lang] = true; });
     }
+    var activeLangs = [];
+    if (o.langs.length) {
+      o.langs.forEach(function (t) {
+        var tLow = String(t).toLowerCase();
+        activeLangs.push(tLow);
+        var p = DB.langs && DB.langs[tLow] && DB.langs[tLow].parent;
+        if (p) activeLangs.push(String(p).toLowerCase());
+      });
+    }
     Object.keys(DB.langs || {}).forEach(function (lang) {
-      if (o.langs.length && o.langs.indexOf(lang) < 0) return;
-      (DB.langs[lang].words || []).forEach(function (e) {
+      var spec = DB.langs[lang];
+      if (activeLangs.length) {
+        var langLow = String(lang).toLowerCase();
+        var base = langLow.split('-')[0];
+        if (activeLangs.indexOf(langLow) < 0 && activeLangs.indexOf(base) < 0) return;
+      }
+      (spec.words || []).forEach(function (e) {
         var cat = e.c || 'profanity';
         if (o.categories && o.categories.indexOf(cat) < 0) return;
         if (remove[String(e.w).toLowerCase() + '\0' + lang]) return;
-        push(e.w, cat, e.s || 2, 'word', lang);
+        push(e.w, cat, e.s || 2, 'word', lang, e.conf || confOfMaturity(spec.maturity));
       });
     });
     if (o.region && DB.regions && DB.regions[o.region] && DB.regions[o.region].add) {
@@ -114,7 +130,7 @@
         if (o.langs.length && o.langs.indexOf(e.lang) < 0) return;
         var cat = e.c || 'profanity';
         if (o.categories && o.categories.indexOf(cat) < 0) return;
-        push(e.w, cat, e.s || 2, 'regional', e.lang);
+        push(e.w, cat, e.s || 2, 'regional', e.lang, e.conf || 0.6);
       });
     }
     Object.keys(DB.emoji || {}).forEach(function (raw) {
@@ -122,9 +138,9 @@
       var off = spec.offensiveIn || [];
       var uni = off.indexOf('*') >= 0;
       if (!uni && (!o.region || off.indexOf(o.region) < 0)) return;
-      push(emojiKey(raw), 'gesture', spec.severity || 2, 'emoji', undefined);
+      push(emojiKey(raw), 'gesture', spec.severity || 2, 'emoji', undefined, spec.conf || 0.6);
     });
-    o.customWords.forEach(function (w) { push(w, 'custom', 2, 'custom', undefined); });
+    o.customWords.forEach(function (w) { push(w, 'custom', 2, 'custom', undefined, 1.0); });
     var patterns = entries.map(function (e, idx) { return { p: entryPattern(e.word), idx: idx }; });
     t = { entries: entries, free: free, trie: buildTrie(patterns) };
     if (trieCache.size > 32) trieCache.delete(trieCache.keys().next().value);
@@ -135,12 +151,21 @@
   function resolveOpts(opts) {
     opts = opts || {};
     var loc = parseLocale(opts.locale);
-    var langOpt = opts.lang || (loc.lang ? [loc.lang] : null);
+    var fullLoc = opts.locale ? String(opts.locale).toLowerCase().replace('_', '-') : '';
+    var langOpt = null;
+    if (opts.lang) {
+      langOpt = (Array.isArray(opts.lang) ? opts.lang : [opts.lang]).map(function (l) { return String(l).toLowerCase(); });
+    } else if (fullLoc && DB.langs && DB.langs[fullLoc]) {
+      langOpt = [fullLoc];
+    } else if (loc.lang) {
+      langOpt = [loc.lang.toLowerCase()];
+    }
     return {
       langs: langOpt || [],
       region: opts.region || loc.region || '',
       categories: opts.categories || null,
       minSeverity: opts.minSeverity || 1,
+      minConfidence: opts.minConfidence || 0,
       customWords: (opts.customWords || []).map(function (w) { return String(w).toLowerCase(); }),
       whitelist: new Set((opts.whitelist || []).map(function (w) { return String(w).toLowerCase(); }))
     };
@@ -164,8 +189,20 @@
     });
     var lo = original.toLowerCase();
     var found = kept.map(function (h) {
-      return { word: t.entries[h.idx].word, category: t.entries[h.idx].category, severity: t.entries[h.idx].severity, via: t.entries[h.idx].via, index: lo.indexOf(t.entries[h.idx].word) };
+      return { word: t.entries[h.idx].word, category: t.entries[h.idx].category, severity: t.entries[h.idx].severity, via: t.entries[h.idx].via, confidence: t.entries[h.idx].confidence, index: lo.indexOf(t.entries[h.idx].word) };
     });
+    if (o.region && DB.symbols) {
+      var seenTok = {};
+      lo.split(/[^\p{L}\p{N}]+/u).filter(Boolean).forEach(function (tok) {
+        var spec = DB.symbols[tok];
+        if (!spec || seenTok[tok]) return;
+        seenTok[tok] = true;
+        if ((spec.regions || []).indexOf(o.region) < 0) return;
+        var conf = spec.conf || 0.5;
+        if (conf < o.minConfidence) return;
+        found.push({ word: tok, category: 'symbol', severity: spec.severity || 1, via: 'symbol', confidence: conf, index: lo.indexOf(tok) });
+      });
+    }
     found.sort(function (a, b) { return a.index - b.index; });
     return { isValid: found.length === 0, maxSeverity: found.reduce(function (m, f) { return Math.max(m, f.severity); }, 0), found: found };
   }
